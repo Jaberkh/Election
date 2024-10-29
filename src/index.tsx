@@ -3,6 +3,7 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { Button, Frog } from 'frog';
 import { devtools } from 'frog/dev';
 import * as fs from 'fs';
+import axios from 'axios';
 import { neynar } from 'frog/hubs';
 
 export const app = new Frog({
@@ -47,17 +48,60 @@ function saveVotes(votes: Votes) {
   }
 }
 
+// تابع تأیید با API Neynar
+async function verifyNeynarAPI() {
+  try {
+    const response = await axios.get('https://hub-api.neynar.com/v1/info', {
+      headers: {
+        'Content-Type': 'application/json',
+        'api_key': 'ACAFFB87-E4FF-4940-9237-FB3D1FAEDF2D'
+      },
+    });
+    console.log('Verification successful:', response.data);
+    return true; // تایید موفق
+  } catch (error) {
+    console.error('Verification failed:', error);
+    return false; // تایید ناموفق
+  }
+}
+
 // بارگذاری رای‌ها از فایل JSON در زمان راه‌اندازی سرور
 let votes: Votes = loadVotes();
+
+// اجرای تابع تأیید و بررسی
+verifyNeynarAPI().then((verified) => {
+  if (verified) {
+    console.log('Frog Frame is verified and ready to use.');
+  } else {
+    console.log('Frog Frame verification failed.');
+  }
+});
 
 app.use('/*', serveStatic({ root: './public' }));
 
 // صفحه اصلی
-app.frame('/', (c) => {
-  const { buttonValue, verified } = c;
+app.frame('/', async (c) => {
+  const { buttonValue } = c;
 
-  if (!verified) {
+  // بررسی وضعیت تأیید
+  const isVerified = await verifyNeynarAPI();
+  if (!isVerified) {
     console.log('Frame verification failed');
+    return c.res({
+      image: (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          textAlign: 'center',
+          color: 'white',
+          fontSize: '24px',
+        }}>
+          Verification failed. Please try again later.
+        </div>
+      ),
+    });
   }
 
   // وضعیت برای تعیین نمایش صفحه‌های مختلف
@@ -136,12 +180,8 @@ app.frame('/', (c) => {
     ),
     intents: showThirdPage
       ? [
-          <Button 
-            action={`https://warpcast.com/compose?text=${encodedMessage}`}
-          >
-            Share Vote
-          </Button>, // استفاده از لینک Composer مستقیم
-          <Button action="https://warpcast.com/jeyloo">Follow Me</Button> // دکمه برای هدایت به پروفایل
+          <Button action="/share-cast">Share Vote</Button>, // استفاده از Cast Action به جای Composer
+          <Button action="https://warpcast.com/jeyloo">Follow Me</Button>, // هدایت به پروفایل
         ]
       : hasSelected
       ? [
