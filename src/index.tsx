@@ -5,6 +5,7 @@ import { devtools } from 'frog/dev';
 import * as fs from 'fs';
 import axios from 'axios';
 import { neynar } from 'frog/hubs';
+import { v4 as uuidv4 } from 'uuid';
 
 export const app = new Frog({
   title: 'Voting Frame',
@@ -37,11 +38,9 @@ function loadVotes(): Votes {
 function saveVotes(votes: Votes) {
   try {
     fs.writeFileSync(votesFilePath, JSON.stringify(votes, null, 2));
-
     const totalVotes = votes.harris + votes.trump;
     const harrisPercent = totalVotes ? Math.round((votes.harris / totalVotes) * 100) : 0;
     const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
-
     console.log(`Updated votes: Harris - ${votes.harris} (${harrisPercent}%), Trump - ${votes.trump} (${trumpPercent}%)`);
   } catch (error) {
     console.error("Error saving votes file:", error);
@@ -58,17 +57,46 @@ async function verifyNeynarAPI() {
       },
     });
     console.log('Verification successful:', response.data);
-    return true; // تایید موفق
+    return true;
   } catch (error) {
     console.error('Verification failed:', error);
-    return false; // تایید ناموفق
+    return false;
   }
 }
 
-// بارگذاری رای‌ها از فایل JSON در زمان راه‌اندازی سرور
+async function postCast(candidate: string) {
+  const uniqueIdem = uuidv4(); // تولید شناسه منحصربه‌فرد برای هر درخواست
+  const frameUrl = 'https://i.imgur.com/HZG1uOl.png'; // لینک تصویر فریم شما
+
+  const text = `I voted for ${candidate}\n\nFrame By @Jeyloo\n\nhttps://election-u-s.onrender.com}`; // اضافه کردن لینک فریم به متن
+
+  try {
+    const response = await axios.post(
+      'https://api.neynar.com/v2/farcaster/cast',
+      {
+        signer_uuid: '98f1172f-0a59-4401-98d2-a044f54c51ab',
+        text: text,
+        channel_id: 'farcaster',
+        idem: uniqueIdem,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          api_key: 'ACAFFB87-E4FF-4940-9237-FB3D1FAEDF2D',
+        },
+      }
+    );
+    console.log('Cast posted successfully:', response.data);
+  } catch (error) {
+    console.error('Error posting cast:', error);
+  }
+}
+
+
+// بارگذاری رای‌ها از فایل JSON
 let votes: Votes = loadVotes();
 
-// اجرای تابع تأیید و بررسی
+// تأیید
 verifyNeynarAPI().then((verified) => {
   if (verified) {
     console.log('Frog Frame is verified and ready to use.');
@@ -79,7 +107,6 @@ verifyNeynarAPI().then((verified) => {
 
 app.use('/*', serveStatic({ root: './public' }));
 
-// صفحه اصلی
 app.frame('/', async (c) => {
   const { buttonValue } = c;
 
@@ -110,10 +137,10 @@ app.frame('/', async (c) => {
 
   // آدرس تصویر بر اساس صفحه‌ی فعلی
   const imageUrl = showThirdPage 
-    ? 'https://i.imgur.com/HZG1uOl.png' // تصویر صفحه سوم
+    ? 'https://i.imgur.com/HZG1uOl.png'
     : hasSelected 
-    ? 'https://i.imgur.com/be4kQO3.png' // تصویر صفحه دوم
-    : 'https://i.imgur.com/bLVqRNb.png'; // تصویر صفحه اصلی
+    ? 'https://i.imgur.com/be4kQO3.png'
+    : 'https://i.imgur.com/bLVqRNb.png';
 
   // بررسی دکمه‌های رای‌گیری در صفحه دوم و هدایت به صفحه سوم
   if (buttonValue === 'harris') {
@@ -129,9 +156,13 @@ app.frame('/', async (c) => {
   const harrisPercent = totalVotes ? Math.round((votes.harris / totalVotes) * 100) : 0;
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
 
-  // ایجاد متن پیش‌فرض برای Cast
-  const message = `Thank you for voting! Harris: ${votes.harris} votes, Trump: ${votes.trump} votes.\nFrame By @Jeyloo`;
-  const encodedMessage = encodeURIComponent(message);
+  const followUrl = "https://warpcast.com/~/profiles/jeyloo";
+
+  // بررسی مقدار دکمه برای ارسال کست
+  if (buttonValue === 'share') {
+    const candidate = votes.harris > votes.trump ? 'Harris' : 'Trump';
+    await postCast(candidate);
+  }
 
   return c.res({
     image: (
@@ -180,8 +211,8 @@ app.frame('/', async (c) => {
     ),
     intents: showThirdPage
       ? [
-          <Button action="/share-cast">Share Vote</Button>, // استفاده از Cast Action به جای Composer
-          <Button action="https://warpcast.com/jeyloo">Follow Me</Button>, // هدایت به پروفایل
+          <Button value="share">Share Cast</Button>,
+          <Button action={followUrl}>Follow Me</Button>
         ]
       : hasSelected
       ? [
@@ -194,13 +225,11 @@ app.frame('/', async (c) => {
   });
 });
 
-// Start the server
+// راه‌اندازی سرور
 const port = 3000;
 console.log(`Server is running on port ${port}`);
 
+// اضافه کردن devtools برای دیباگینگ
 devtools(app, { serveStatic });
 
-serve({
-  fetch: app.fetch,
-  port,
-});
+serve({ fetch: app.fetch, port });
