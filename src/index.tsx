@@ -180,12 +180,8 @@ app.frame('/', async (c) => {
     ),
     intents: showThirdPage
       ? [
-          <Button 
-            action={`https://warpcast.com/~/compose?text=${encodedMessage}`}
-          >
-            Share Vote
-          </Button>, // استفاده از Intent URL برای Composer
-          <Button action="https://warpcast.com/~/profiles/jeyloo">Follow Me</Button> // دکمه برای هدایت به پروفایل
+          <Button action="/share-cast">Share Vote</Button>, // استفاده از Cast Action به جای Composer
+          <Button action="https://warpcast.com/jeyloo">Follow Me</Button>, // هدایت به پروفایل
         ]
       : hasSelected
       ? [
