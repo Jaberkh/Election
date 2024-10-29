@@ -3,7 +3,6 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { Button, Frog } from 'frog';
 import { devtools } from 'frog/dev';
 import * as fs from 'fs';
-
 import { neynar } from 'frog/hubs';
 
 export const app = new Frog({
@@ -52,6 +51,20 @@ function saveVotes(votes: Votes) {
 let votes: Votes = loadVotes();
 
 app.use('/*', serveStatic({ root: './public' }));
+
+// ایجاد Cast Action برای اشتراک‌گذاری رای‌ها
+app.castAction(
+  '/share-cast',
+  (c) => {
+    const message = `Thank you for voting! Harris: ${votes.harris} votes, Trump: ${votes.trump} votes.\nFrame By @Jeyloo`;
+    return c.message({ message });
+  },
+  {
+    name: 'Share Vote',
+    description: 'Share the voting results',
+    icon: 'megaphone', // آیکون برای Cast Action
+  }
+);
 
 // صفحه اصلی
 app.frame('/', (c) => {
@@ -106,23 +119,23 @@ app.frame('/', (c) => {
           style={{
             width: '100%',
             height: '100%',
-            objectFit: 'contain', // تصویر به طور کامل فیت می‌شود
+            objectFit: 'contain',
           }}
         />
         {showThirdPage && (
           <div
             style={{
               position: 'absolute',
-              bottom: '2%', // جابجایی به سمت پایین
+              bottom: '2%',
               color: 'white',
-              fontSize: '110px', // اندازه فونت بزرگ‌تر
+              fontSize: '110px',
               fontStyle: 'normal',
               letterSpacing: '-0.025em',
               lineHeight: 1.4,
               padding: '0 20px',
               whiteSpace: 'pre-wrap',
               display: 'flex',
-              gap: '325px', // فاصله بین درصدها
+              gap: '325px',
             }}
           >
             <span>{`${trumpPercent}`}</span>
@@ -133,12 +146,8 @@ app.frame('/', (c) => {
     ),
     intents: showThirdPage
       ? [
-          <Button 
-            action={`https://warpcast.com/compose?text=${encodeURIComponent(`Thank you for voting! Harris: ${votes.harris} votes, Trump: ${votes.trump} votes.\nFrame By @Jeyloo`)}`}
-          >
-            Share Vote
-          </Button>, // هدایت به Composer Cast
-          <Button action="@jeyloo">Follow Me</Button>, // دکمه برای هدایت به پروفایل @jeyloo
+          <Button action="/share-cast">Share Vote</Button>, // استفاده از Cast Action به جای Composer
+          <Button action="https://warpcast.com/jeyloo">Follow Me</Button>, // هدایت به پروفایل
         ]
       : hasSelected
       ? [
