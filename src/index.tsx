@@ -52,20 +52,6 @@ let votes: Votes = loadVotes();
 
 app.use('/*', serveStatic({ root: './public' }));
 
-// ایجاد Cast Action برای اشتراک‌گذاری رای‌ها
-app.castAction(
-  '/share-cast',
-  (c) => {
-    const message = `Thank you for voting! Harris: ${votes.harris} votes, Trump: ${votes.trump} votes.\nFrame By @Jeyloo`;
-    return c.message({ message });
-  },
-  {
-    name: 'Share Vote',
-    description: 'Share the voting results',
-    icon: 'megaphone', // آیکون برای Cast Action
-  }
-);
-
 // صفحه اصلی
 app.frame('/', (c) => {
   const { buttonValue, verified } = c;
@@ -98,6 +84,10 @@ app.frame('/', (c) => {
   const totalVotes = votes.harris + votes.trump;
   const harrisPercent = totalVotes ? Math.round((votes.harris / totalVotes) * 100) : 0;
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
+
+  // ایجاد متن پیش‌فرض برای Cast
+  const message = `Thank you for voting! Harris: ${votes.harris} votes, Trump: ${votes.trump} votes.\nFrame By @Jeyloo`;
+  const encodedMessage = encodeURIComponent(message);
 
   return c.res({
     image: (
@@ -146,8 +136,12 @@ app.frame('/', (c) => {
     ),
     intents: showThirdPage
       ? [
-          <Button action="/share-cast">Share Vote</Button>, // استفاده از Cast Action به جای Composer
-          <Button action="https://warpcast.com/jeyloo">Follow Me</Button>, // هدایت به پروفایل
+          <Button 
+            action={`https://warpcast.com/compose?text=${encodedMessage}`}
+          >
+            Share Vote
+          </Button>, // استفاده از لینک Composer مستقیم
+          <Button action="https://warpcast.com/jeyloo">Follow Me</Button> // دکمه برای هدایت به پروفایل
         ]
       : hasSelected
       ? [
@@ -155,7 +149,7 @@ app.frame('/', (c) => {
           <Button value="trump">Trump</Button>,
         ]
       : [
-          <Button value="select">Vote</Button>, // تغییر متن دکمه به "Vote"
+          <Button value="select">Vote</Button>,
         ],
   });
 });
