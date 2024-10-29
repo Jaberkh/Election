@@ -2,7 +2,8 @@ import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { Button, Frog } from 'frog';
 import { devtools } from 'frog/dev';
-import fs from 'fs';
+import * as fs from 'fs';
+
 import { neynar } from 'frog/hubs';
 
 export const app = new Frog({
@@ -132,8 +133,12 @@ app.frame('/', (c) => {
     ),
     intents: showThirdPage
       ? [
-          <Button.AddCastAction action="/share-composer">Share Vote</Button.AddCastAction>, // دکمه برای هدایت به Composer Action
-          <Button action="https://warpcast.com/jeyloo">Follow Me</Button>, // دکمه برای هدایت به پروفایل @jeyloo
+          <Button 
+            action={`https://warpcast.com/compose?text=${encodeURIComponent(`Thank you for voting! Harris: ${votes.harris} votes, Trump: ${votes.trump} votes.\nFrame By @Jeyloo`)}`}
+          >
+            Share Vote
+          </Button>, // هدایت به Composer Cast
+          <Button action="@jeyloo">Follow Me</Button>, // دکمه برای هدایت به پروفایل @jeyloo
         ]
       : hasSelected
       ? [
@@ -145,24 +150,6 @@ app.frame('/', (c) => {
         ],
   });
 });
-
-// Composer Action برای ایجاد کست
-app.composerAction(
-  '/share-composer',
-  (c) => {
-    const message = `Thank you for voting! Harris: ${votes.harris} votes, Trump: ${votes.trump} votes.\nFrame By @Jeyloo`;
-    return c.res({
-      title: 'Share Your Vote',
-      url: `https://warpcast.com/compose?text=${encodeURIComponent(message)}`, // هدایت کاربر به فرم کست
-    });
-  },
-  {
-    name: 'Share Vote',
-    description: 'Share the results',
-    icon: 'megaphone', // آیکون انتخابی
-    imageUrl: 'https://example.com/logo.png', // تصویر دلخواه
-  }
-);
 
 // Start the server
 const port = 3000;
