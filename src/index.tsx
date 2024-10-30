@@ -3,7 +3,6 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { Button, Frog } from 'frog';
 import { devtools } from 'frog/dev';
 import * as fs from 'fs';
-import axios from 'axios';
 import { neynar } from 'frog/hubs';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -47,95 +46,21 @@ function saveVotes(votes: Votes) {
   }
 }
 
-// تابع تأیید با API Neynar
-async function verifyNeynarAPI() {
-  try {
-    const response = await axios.get('https://hub-api.neynar.com/v1/info', {
-      headers: {
-        'Content-Type': 'application/json',
-        'api_key': 'ACAFFB87-E4FF-4940-9237-FB3D1FAEDF2D'
-      },
-    });
-    console.log('Verification successful:', response.data);
-    return true;
-  } catch (error) {
-    console.error('Verification failed:', error);
-    return false;
-  }
-}
-
-// تابع برای ارسال کست
-async function postCast(candidate: string) {
-  const uniqueIdem = uuidv4(); // تولید شناسه منحصربه‌فرد برای هر درخواست
-
-  const text = `I voted for ${candidate}\n\nFrame By @Jeyloo`; // متن جدید کست
-  const frameUrl = 'https://election-u-s.onrender.com'; // آدرس فریم
-
-  try {
-    const response = await axios.post(
-      'https://api.neynar.com/v2/farcaster/cast',
-      {
-        signer_uuid: '98f1172f-0a59-4401-98d2-a044f54c51ab',
-        text: text,
-        channel_id: 'farcaster',
-        idem: uniqueIdem,
-        embeds: [
-          {
-            type: 'image',
-            url: frameUrl, // اضافه کردن فریم به عنوان ضمیمه
-          }
-        ]
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          api_key: 'ACAFFB87-E4FF-4940-9237-FB3D1FAEDF2D',
-        },
-      }
-    );
-    console.log('Cast posted successfully with frame:', response.data);
-  } catch (error) {
-    console.error('Error posting cast with frame:', error);
-  }
-}
-
 // بارگذاری رای‌ها از فایل JSON
 let votes: Votes = loadVotes();
 
-// تأیید
-verifyNeynarAPI().then((verified) => {
-  if (verified) {
-    console.log('Frog Frame is verified and ready to use.');
-  } else {
-    console.log('Frog Frame verification failed.');
-  }
-});
+// ایجاد URL برای نمایش کست آماده انتشار
+function generateCastIntentUrl(candidate: string, frameUrl: string): string {
+  const text = `I voted for ${candidate}\n\nFrame By @Jeyloo`;
+  const encodedText = encodeURIComponent(text);
+  const encodedFrameUrl = encodeURIComponent(frameUrl);
+  return `https://warpcast.com/~/compose?text=${encodedText}&embed=${encodedFrameUrl}`;
+}
 
 app.use('/*', serveStatic({ root: './public' }));
 
 app.frame('/', async (c) => {
   const { buttonValue } = c;
-
-  // بررسی وضعیت تأیید
-  const isVerified = await verifyNeynarAPI();
-  if (!isVerified) {
-    console.log('Frame verification failed');
-    return c.res({
-      image: (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%',
-          textAlign: 'center',
-          color: 'white',
-          fontSize: '24px',
-        }}>
-          Verification failed. Please try again later.
-        </div>
-      ),
-    });
-  }
 
   // وضعیت برای تعیین نمایش صفحه‌های مختلف
   const hasSelected = buttonValue === 'select';
@@ -163,11 +88,13 @@ app.frame('/', async (c) => {
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
 
   const followUrl = "https://warpcast.com/~/profiles/jeyloo";
+  const frameUrl = 'https://election-u-s.onrender.com';
 
-  // بررسی مقدار دکمه برای ارسال کست
+  // بررسی مقدار دکمه برای ایجاد Intent URL کست
+  let castIntentUrl = "";
   if (buttonValue === 'share') {
     const candidate = votes.harris > votes.trump ? 'Harris' : 'Trump';
-    await postCast(candidate);
+    castIntentUrl = generateCastIntentUrl(candidate, frameUrl); // ساخت URL برای نمایش کست آماده
   }
 
   return c.res({
@@ -217,7 +144,7 @@ app.frame('/', async (c) => {
     ),
     intents: showThirdPage
       ? [
-          <Button value="share">Share Cast</Button>,
+          <Button action={castIntentUrl}>Share Cast</Button>, // دکمه برای نمایش کست آماده انتشار
           <Button action={followUrl}>Follow Me</Button>
         ]
       : hasSelected
