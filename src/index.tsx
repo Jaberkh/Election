@@ -59,7 +59,7 @@ function generateCastIntentUrl(candidate: string, frameUrl: string): string {
 app.use('/*', serveStatic({ root: './public' }));
 
 app.frame('/', (c) => {
-  const { frameData, verified } = c;
+  const { frameData, verified, buttonValue } = c;
 
   // چاپ مشخصات کاربر در کنسول اگر frameData موجود باشد
   if (frameData) {
@@ -68,8 +68,6 @@ app.frame('/', (c) => {
     console.log(`Cast ID: ${castId?.hash}`);
     console.log(`Button Index: ${buttonIndex}`);
   }
-
-  const { buttonValue } = c;
 
   // وضعیت برای تعیین نمایش صفحه‌های مختلف
   const hasSelected = buttonValue === 'select';
@@ -99,12 +97,11 @@ app.frame('/', (c) => {
   const followUrl = "https://warpcast.com/~/profiles/jeyloo";
   const frameUrl = 'https://election-u-s.onrender.com';
 
-  // بررسی مقدار دکمه برای ایجاد Intent URL کست
-  let castIntentUrl = "";
-  if (buttonValue === 'share') {
-    const candidate = votes.harris > votes.trump ? 'Harris' : 'Trump';
-    castIntentUrl = generateCastIntentUrl(candidate, frameUrl); // ساخت URL برای نمایش کست آماده
-  }
+  // ایجاد URL کست برای دکمه Share
+  const castIntentUrl = generateCastIntentUrl(
+    votes.harris > votes.trump ? 'Harris' : 'Trump',
+    frameUrl
+  );
 
   return c.res({
     image: (
@@ -113,7 +110,7 @@ app.frame('/', (c) => {
           position: 'relative',
           width: '100%',
           height: '100%',
-          background: showThirdPage ? 'black' : 'black',
+          background: 'black',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -152,20 +149,22 @@ app.frame('/', (c) => {
       </div>
     ),
     intents: showThirdPage
-  ? [
-      <Button action={castIntentUrl}>Share Cast</Button>, // باز کردن لینک کست آماده و بستن فریم
-      <Button action={followUrl}>Follow Me</Button>
-    ]
-  : hasSelected
-  ? [
-      <Button value="harris">Harris</Button>,
-      <Button value="trump">Trump</Button>,
-    ]
-  : [
-      <Button value="select">Vote</Button>,
-    ],
-
-
+      ? [
+          <Button
+            action={castIntentUrl} // استفاده از action برای باز کردن URL
+          >
+            Share Cast
+          </Button>, 
+          <Button action={followUrl}>Follow Me</Button>
+        ]
+      : hasSelected
+      ? [
+          <Button value="harris">Harris</Button>,
+          <Button value="trump">Trump</Button>,
+        ]
+      : [
+          <Button value="select">Vote</Button>,
+        ],
   });
 });
 
