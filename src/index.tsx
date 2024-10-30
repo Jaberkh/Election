@@ -3,8 +3,8 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { Button, Frog } from 'frog';
 import { devtools } from 'frog/dev';
 import * as fs from 'fs';
+import axios from 'axios';
 import { neynar } from 'frog/hubs';
-import { v4 as uuidv4 } from 'uuid';
 
 export const app = new Frog({
   title: 'Voting Frame',
@@ -51,15 +51,24 @@ let votes: Votes = loadVotes();
 
 // ایجاد URL برای نمایش کست آماده انتشار
 function generateCastIntentUrl(candidate: string, frameUrl: string): string {
-  const text = `I voted for ${candidate}\n\nFrame By @Jeyloo`;
+  const text = `I voted for ${candidate}\n\nCheck it out: ${frameUrl}`;
   const encodedText = encodeURIComponent(text);
-  const encodedFrameUrl = encodeURIComponent(frameUrl);
-  return `https://warpcast.com/~/compose?text=${encodedText}&embed=${encodedFrameUrl}`;
+  return `https://warpcast.com/~/compose?text=${encodedText}`;
 }
 
 app.use('/*', serveStatic({ root: './public' }));
 
-app.frame('/', async (c) => {
+app.frame('/', (c) => {
+  const { frameData, verified } = c;
+
+  // چاپ مشخصات کاربر در کنسول اگر frameData موجود باشد
+  if (frameData) {
+    const { fid, castId, buttonIndex } = frameData;
+    console.log(`User FID: ${fid}`);
+    console.log(`Cast ID: ${castId?.hash}`);
+    console.log(`Button Index: ${buttonIndex}`);
+  }
+
   const { buttonValue } = c;
 
   // وضعیت برای تعیین نمایش صفحه‌های مختلف
@@ -144,7 +153,7 @@ app.frame('/', async (c) => {
     ),
     intents: showThirdPage
       ? [
-          <Button action={castIntentUrl}>Share Cast</Button>, // دکمه برای نمایش کست آماده انتشار
+          <Button action={castIntentUrl}>Share Cast</Button>, // باز کردن لینک آماده کست
           <Button action={followUrl}>Follow Me</Button>
         ]
       : hasSelected
@@ -158,7 +167,6 @@ app.frame('/', async (c) => {
   });
 });
 
-// راه‌اندازی سرور
 const port = 3000;
 console.log(`Server is running on port ${port}`);
 
