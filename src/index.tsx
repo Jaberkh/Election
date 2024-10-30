@@ -137,7 +137,7 @@ app.frame('/', (c) => {
       ? [
           <Button
             action="post_redirect" // استفاده از post_redirect
-            value="/api/share-cast" // مقدار برای درخواست POST به سرور
+            value="/api/share-cast" // ارسال درخواست به این مسیر
           >
             Share Cast
           </Button>, 
