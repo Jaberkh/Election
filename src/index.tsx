@@ -3,7 +3,6 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { Button, Frog } from 'frog';
 import { devtools } from 'frog/dev';
 import * as fs from 'fs';
-import axios from 'axios';
 import { neynar } from 'frog/hubs';
 
 export const app = new Frog({
@@ -58,29 +57,19 @@ function generateCastIntentUrl(candidate: string, frameUrl: string): string {
 
 app.use('/*', serveStatic({ root: './public' }));
 
+// مسیر اصلی فریم
 app.frame('/', (c) => {
   const { frameData, verified, buttonValue } = c;
 
-  // چاپ مشخصات کاربر در کنسول اگر frameData موجود باشد
-  if (frameData) {
-    const { fid, castId, buttonIndex } = frameData;
-    console.log(`User FID: ${fid}`);
-    console.log(`Cast ID: ${castId?.hash}`);
-    console.log(`Button Index: ${buttonIndex}`);
-  }
-
-  // وضعیت برای تعیین نمایش صفحه‌های مختلف
   const hasSelected = buttonValue === 'select';
   const showThirdPage = buttonValue === 'harris' || buttonValue === 'trump';
 
-  // آدرس تصویر بر اساس صفحه‌ی فعلی
   const imageUrl = showThirdPage 
     ? 'https://i.imgur.com/HZG1uOl.png'
     : hasSelected 
     ? 'https://i.imgur.com/be4kQO3.png'
     : 'https://i.imgur.com/bLVqRNb.png';
 
-  // بررسی دکمه‌های رای‌گیری در صفحه دوم و هدایت به صفحه سوم
   if (buttonValue === 'harris') {
     votes.harris += 1;
     saveVotes(votes);
@@ -89,15 +78,11 @@ app.frame('/', (c) => {
     saveVotes(votes);
   }
 
-  // محاسبه کل رای‌ها و درصدها برای نمایش بدون اعشار
   const totalVotes = votes.harris + votes.trump;
   const harrisPercent = totalVotes ? Math.round((votes.harris / totalVotes) * 100) : 0;
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
 
-  const followUrl = "https://warpcast.com/~/profiles/jeyloo";
   const frameUrl = 'https://election-u-s.onrender.com';
-
-  // ایجاد URL کست برای دکمه Share
   const castIntentUrl = generateCastIntentUrl(
     votes.harris > votes.trump ? 'Harris' : 'Trump',
     frameUrl
@@ -151,11 +136,12 @@ app.frame('/', (c) => {
     intents: showThirdPage
       ? [
           <Button
-            action={castIntentUrl} // استفاده از action برای باز کردن URL
+            action="post_redirect" // استفاده از post_redirect
+            value="/api/share-cast" // مقدار برای درخواست POST به سرور
           >
             Share Cast
           </Button>, 
-          <Button action={followUrl}>Follow Me</Button>
+          <Button action="link" value="https://warpcast.com/~/profiles/jeyloo">Follow Me</Button>
         ]
       : hasSelected
       ? [
@@ -166,6 +152,16 @@ app.frame('/', (c) => {
           <Button value="select">Vote</Button>,
         ],
   });
+});
+
+// مسیر پردازش درخواست دکمه Share
+app.post('/api/share-cast', (c) => {
+  const candidate = votes.harris > votes.trump ? 'Harris' : 'Trump';
+  const frameUrl = 'https://election-u-s.onrender.com';
+  const castIntentUrl = generateCastIntentUrl(candidate, frameUrl);
+
+  // ارسال پاسخ 302 برای هدایت کاربر به صفحه کست
+  return c.redirect(castIntentUrl);
 });
 
 const port = 3000;
