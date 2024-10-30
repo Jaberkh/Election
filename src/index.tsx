@@ -153,8 +153,8 @@ app.frame('/', (c) => {
     ),
     intents: showThirdPage
       ? [
-          <Button action={castIntentUrl}>Share Cast</Button>, // باز کردن لینک آماده کست
-          <Button action={followUrl}>Follow Me</Button>
+          <Button Intent={castIntentUrl}>Share Cast</Button>, // باز کردن لینک آماده کست
+          <Button Intent={followUrl}>Follow Me</Button>
         ]
       : hasSelected
       ? [
