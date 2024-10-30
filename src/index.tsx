@@ -152,18 +152,20 @@ app.frame('/', (c) => {
       </div>
     ),
     intents: showThirdPage
-      ? [
-          <Button Intent={castIntentUrl}>Share Cast</Button>, // باز کردن لینک آماده کست
-          <Button Intent={followUrl}>Follow Me</Button>
-        ]
-      : hasSelected
-      ? [
-          <Button value="harris">Harris</Button>,
-          <Button value="trump">Trump</Button>,
-        ]
-      : [
-          <Button value="select">Vote</Button>,
-        ],
+  ? [
+      <Button action={castIntentUrl}>Share Cast</Button>, // باز کردن لینک کست آماده و بستن فریم
+      <Button action={followUrl}>Follow Me</Button>
+    ]
+  : hasSelected
+  ? [
+      <Button value="harris">Harris</Button>,
+      <Button value="trump">Trump</Button>,
+    ]
+  : [
+      <Button value="select">Vote</Button>,
+    ],
+
+
   });
 });
 
