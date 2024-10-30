@@ -48,11 +48,11 @@ function saveVotes(votes: Votes) {
 // بارگذاری رای‌ها از فایل JSON
 let votes: Votes = loadVotes();
 
-// ایجاد URL برای نمایش کست آماده انتشار
-function generateCastIntentUrl(candidate: string, frameUrl: string): string {
+// ایجاد URL برای هدایت به صفحه ایجاد کست جدید
+function generateNewCastUrl(candidate: string, frameUrl: string): string {
   const text = `I voted for ${candidate}\n\nCheck it out: ${frameUrl}`;
   const encodedText = encodeURIComponent(text);
-  return `https://warpcast.com/~/compose?text=${encodedText}`;
+  return `https://warpcast.com/~/compose?text=Hello%20world!&embeds[]=https://election-u-s.onrender.com`;
 }
 
 app.use('/*', serveStatic({ root: './public' }));
@@ -83,10 +83,7 @@ app.frame('/', (c) => {
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
 
   const frameUrl = 'https://election-u-s.onrender.com';
-  const castIntentUrl = generateCastIntentUrl(
-    votes.harris > votes.trump ? 'Harris' : 'Trump',
-    frameUrl
-  );
+  const newCastUrl = generateNewCastUrl(votes.harris > votes.trump ? 'Harris' : 'Trump', frameUrl);
 
   return c.res({
     image: (
@@ -136,8 +133,8 @@ app.frame('/', (c) => {
     intents: showThirdPage
       ? [
           <Button
-            action="post_redirect" // استفاده از post_redirect
-            value="/api/share-cast" // ارسال درخواست به این مسیر
+            action="link" // استفاده از اکشن "link"
+            value={newCastUrl} // هدایت به صفحه ایجاد کست جدید
           >
             Share Cast
           </Button>, 
@@ -152,16 +149,6 @@ app.frame('/', (c) => {
           <Button value="select">Vote</Button>,
         ],
   });
-});
-
-// مسیر پردازش درخواست دکمه Share
-app.post('/api/share-cast', (c) => {
-  const candidate = votes.harris > votes.trump ? 'Harris' : 'Trump';
-  const frameUrl = 'https://election-u-s.onrender.com';
-  const castIntentUrl = generateCastIntentUrl(candidate, frameUrl);
-
-  // ارسال پاسخ 302 برای هدایت کاربر به صفحه کست
-  return c.redirect(castIntentUrl);
 });
 
 const port = 3000;
