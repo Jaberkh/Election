@@ -3,19 +3,18 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { Button, Frog } from 'frog';
 import { devtools } from 'frog/dev';
 import * as fs from 'fs';
-import axios from 'axios';
-import { neynar } from 'frog/hubs';
 
+// پیکربندی و تنظیمات فریم
 export const app = new Frog({
   title: 'Voting Frame',
   imageAspectRatio: '1:1',
-  hub: neynar({ apiKey: '8CC4FE87-3950-4481-BAD2-20475D7F7B68' }),
   verify: 'silent',
 });
 
 const votesFilePath = './votes.json';
 type Votes = { harris: number; trump: number; };
 
+// توابع بارگذاری و ذخیره آرا
 function loadVotes(): Votes {
   try {
     const data = fs.readFileSync(votesFilePath, 'utf-8');
@@ -35,27 +34,7 @@ function saveVotes(votes: Votes) {
   }
 }
 
-async function verifyNeynarAPI() {
-  try {
-    const response = await axios.get('https://hub-api.neynar.com/v1/info', {
-      headers: { 'Content-Type': 'application/json', 'api_key': 'ACAFFB87-E4FF-4940-9237-FB3D1FAEDF2D' },
-    });
-    console.log('Verification successful:', response.data);
-    return true;
-  } catch (error) {
-    console.error('Verification failed:', error);
-    return false;
-  }
-}
-
 let votes: Votes = loadVotes();
-verifyNeynarAPI().then((verified) => {
-  if (verified) {
-    console.log('Frog Frame is verified and ready to use.');
-  } else {
-    console.log('Frog Frame verification failed.');
-  }
-});
 
 app.use('/*', serveStatic({ root: './public' }));
 
@@ -65,6 +44,7 @@ app.frame('/', (c) => {
   const hasSelected = buttonValue === 'select';
   const showThirdPage = buttonValue === 'harris' || buttonValue === 'trump';
 
+  // تنظیم URL تصویر بر اساس وضعیت رای‌گیری
   const imageUrl = showThirdPage 
     ? 'https://i.imgur.com/HZG1uOl.png' 
     : hasSelected 
@@ -78,6 +58,7 @@ app.frame('/', (c) => {
 
   console.log("Image URL:", imageUrl);
 
+  // به‌روزرسانی آرا بر اساس انتخاب کاربر
   if (buttonValue === 'harris') {
     votes.harris += 1;
     saveVotes(votes);
@@ -90,17 +71,7 @@ app.frame('/', (c) => {
   const harrisPercent = totalVotes ? Math.round((votes.harris / totalVotes) * 100) : 0;
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
 
-  const message = `Thank you for voting! Harris: ${votes.harris} votes, Trump: ${votes.trump} votes. Frame By @Jeyloo`;
-  const warpcastIntentUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(message)}`;
-  const followUrl = "https://warpcast.com/~/profiles/jeyloo";
-
-  if (!warpcastIntentUrl || !followUrl) {
-    console.error("Invalid Warpcast or Follow URL");
-    return c.res({ image: <div>Error generating share URLs</div> });
-  }
-
-  console.log("Warpcast Intent URL:", warpcastIntentUrl);
-  console.log("Follow URL:", followUrl);
+  const followUrl = "https://warpcast.com/jeyloo"; // لینک مستقیم پروفایل jeyloo در Warpcast
 
   return c.res({
     image: (
@@ -140,8 +111,8 @@ app.frame('/', (c) => {
     ),
     intents: showThirdPage
       ? [
-          <Button action={warpcastIntentUrl}>Share Vote</Button>,
-          <Button action={followUrl}>Follow Me</Button>
+          <Button>Share Vote</Button>,
+          <Button action={followUrl}>Follow Me</Button> // دکمه Follow با لینک مستقیم به پروفایل jeyloo
         ]
       : hasSelected
       ? [
