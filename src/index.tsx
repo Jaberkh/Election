@@ -20,7 +20,6 @@ type Votes = {
 
 // مسیر فایل JSON برای ذخیره رای‌ها
 const votesFilePath = './votes.json';
-const votedFidsFilePath = './votedFids.json'; // فایل برای ذخیره fid کاربرانی که رای داده‌اند
 
 // تابع برای خواندن رای‌ها از فایل JSON
 function loadVotes(): Votes {
@@ -42,39 +41,46 @@ function saveVotes(votes: Votes) {
   }
 }
 
-// تابع برای بارگذاری فهرست fid‌های رای‌داده‌شده
-function loadVotedFids(): Set<number> {
-  try {
-    if (!fs.existsSync(votedFidsFilePath)) {
-      // اگر فایل وجود ندارد، یک فایل خالی ایجاد می‌کنیم
-      fs.writeFileSync(votedFidsFilePath, JSON.stringify([]));
-    }
-    const data = fs.readFileSync(votedFidsFilePath, 'utf-8');
-    return new Set(JSON.parse(data));
-  } catch (error) {
-    console.error("Error reading votedFids file:", error);
-    return new Set();
-  }
-}
-
-// تابع برای ذخیره فهرست fid‌های رای‌داده‌شده
-function saveVotedFids(votedFids: Set<number>) {
-  try {
-    fs.writeFileSync(votedFidsFilePath, JSON.stringify([...votedFids]));
-  } catch (error) {
-    console.error("Error saving votedFids file:", error);
-  }
-}
-
-// بارگذاری رای‌ها و فهرست fid‌ها از فایل‌ها
+// بارگذاری رای‌ها از فایل
 let votes: Votes = loadVotes();
-let votedFids: Set<number> = loadVotedFids();
 
 app.use('/*', serveStatic({ root: './public' }));
 
+// افزودن متا تگ‌ها در صفحه اصلی (روت)
+app.get('/', (c) => {
+  return c.html(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Voting Frame by Jeyloo</title>
+
+      <!-- Open Graph Meta Tags -->
+      <meta property="og:title" content="Voting Frame by Jeyloo" />
+      <meta property="og:description" content="I voted, what's your opinion? Vote and share your thoughts!" />
+      <meta property="og:image" content="https://i.imgur.com/HZG1uOl.png" />
+      <meta property="og:url" content="https://election-u-s.onrender.com" />
+      <meta property="og:type" content="website" />
+
+      <!-- Optional Twitter Card Meta Tags -->
+      <meta name="twitter:card" content="summary_large_image">
+      <meta name="twitter:title" content="Voting Frame by Jeyloo">
+      <meta name="twitter:description" content="I voted, what's your opinion? Vote and share your thoughts!">
+      <meta name="twitter:image" content="https://i.imgur.com/HZG1uOl.png">
+
+    </head>
+    <body>
+      <div id="app"></div>
+      <script type="module" src="main.js"></script>
+    </body>
+    </html>
+  `);
+});
+
 // مسیر اصلی فریم
 app.frame('/', (c) => {
-  const { frameData, verified, buttonValue } = c;
+  const { frameData, buttonValue } = c;
 
   const hasSelected = buttonValue === 'select';
   const showThirdPage = buttonValue === 'harris' || buttonValue === 'trump';
@@ -87,53 +93,23 @@ app.frame('/', (c) => {
 
   let selectedCandidate = '';
 
- const fid = frameData?.fid;
-if (fid !== undefined && votedFids.has(fid)) { // اطمینان از عدم undefined بودن fid
-  return c.res({
-    image: (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          textAlign: 'center',
-          fontSize: '24px',
-          height: '100%',  // پر کردن ارتفاع برای مرکزیت عمودی
-          width: '100%',   // پر کردن عرض برای مرکزیت افقی
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',  // پس‌زمینه نیمه‌شفاف برای خوانایی
-        }}
-      >
-        Each user can vote only once!
-      </div>
-    ),
-  });
-}
-
-
   if (buttonValue === 'harris') {
     votes.harris += 1;
     selectedCandidate = 'Harris';
-    if (fid !== undefined) votedFids.add(fid); // افزودن fid به فهرست در صورت عدم undefined بودن
     saveVotes(votes);
-    saveVotedFids(votedFids);
   } else if (buttonValue === 'trump') {
     votes.trump += 1;
     selectedCandidate = 'Trump';
-    if (fid !== undefined) votedFids.add(fid);
     saveVotes(votes);
-    saveVotedFids(votedFids);
   }
 
   const totalVotes = votes.harris + votes.trump;
   const harrisPercent = totalVotes ? Math.round((votes.harris / totalVotes) * 100) : 0;
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
 
-  // ایجاد متن کست با نام نامزد و آدرس فریم
-  const frameUrl = 'https://election-u-s.onrender.com';
   const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
     selectedCandidate
-  )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A\n${encodeURIComponent(frameUrl)}`;
+  )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A https://election-u-s.onrender.com`;
 
   return c.res({
     image: (
@@ -181,21 +157,17 @@ if (fid !== undefined && votedFids.has(fid)) { // اطمینان از عدم und
       </div>
     ),
     intents: showThirdPage
-  ? [
-      <div>
-        <span>Frame By @jayloo</span><br />
-        <Button.Link href={composeCastUrl}>Share</Button.Link>
-      </div>
-    ]
-  : hasSelected
-  ? [
-      <Button value="harris">Harris</Button>,
-      <Button value="trump">Trump</Button>,
-    ]
-  : [
-      <Button value="select">Vote</Button>,
-    ],
-
+      ? [
+          <Button.Link href={composeCastUrl}>Share</Button.Link> // دکمه "Share" با متن انگلیسی
+        ]
+      : hasSelected
+      ? [
+          <Button value="harris">Harris</Button>,
+          <Button value="trump">Trump</Button>,
+        ]
+      : [
+          <Button value="select">Vote</Button>,
+        ],
   });
 });
 
