@@ -72,38 +72,6 @@ let votedFids: Set<number> = loadVotedFids();
 
 app.use('/*', serveStatic({ root: './public' }));
 
-// افزودن متا تگ‌ها در صفحه اصلی (روت)
-app.get('/', (c) => {
-  return c.html(`
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Voting Frame by Jeyloo</title>
-
-      <!-- Open Graph Meta Tags -->
-      <meta property="og:title" content="Voting Frame by Jeyloo" />
-      <meta property="og:description" content="I voted, what's your opinion? Vote and share your thoughts!" />
-      <meta property="og:image" content="https://i.imgur.com/HZG1uOl.png" />
-      <meta property="og:url" content="https://election-u-s.onrender.com" />
-      <meta property="og:type" content="website" />
-
-      <!-- Optional Twitter Card Meta Tags -->
-      <meta name="twitter:card" content="summary_large_image">
-      <meta name="twitter:title" content="Voting Frame by Jeyloo">
-      <meta name="twitter:description" content="I voted, what's your opinion? Vote and share your thoughts!">
-      <meta name="twitter:image" content="https://i.imgur.com/HZG1uOl.png">
-
-    </head>
-    <body>
-      <div id="app"></div>
-      <script type="module" src="main.js"></script>
-    </body>
-    </html>
-  `);
-});
-
 // مسیر اصلی فریم
 app.frame('/', (c) => {
   const { frameData, verified, buttonValue } = c;
@@ -123,7 +91,11 @@ app.frame('/', (c) => {
   const fid = frameData?.fid;
   if (fid !== undefined && votedFids.has(fid)) { // اطمینان از عدم undefined بودن fid
     return c.res({
-      image: <div style={{ color: 'white', textAlign: 'center' }}>You have already voted!</div>,
+      image: (
+        <div style={{ color: 'white', textAlign: 'center', fontSize: '24px' }}>
+          Each user can vote only once!
+        </div>
+      ),
     });
   }
 
@@ -146,9 +118,10 @@ app.frame('/', (c) => {
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
 
   // ایجاد متن کست با نام نامزد و آدرس فریم
+  const frameUrl = 'https://election-u-s.onrender.com';
   const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
     selectedCandidate
-  )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A https://election-u-s.onrender.com`;
+  )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A${encodeURIComponent(frameUrl)}`;
 
   return c.res({
     image: (
@@ -197,7 +170,7 @@ app.frame('/', (c) => {
     ),
     intents: showThirdPage
       ? [
-          <Button.Link href={composeCastUrl}>Share</Button.Link> // دکمه "Share" با متن انگلیسی
+          <Button.Link href={composeCastUrl}>Share</Button.Link> // دکمه "Share" با متن انگلیسی و لینک
         ]
       : hasSelected
       ? [
