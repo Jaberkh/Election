@@ -91,7 +91,11 @@ app.frame('/', (c) => {
   const fid = frameData?.fid;
   if (fid !== undefined && votedFids.has(fid)) { // اطمینان از عدم undefined بودن fid
     return c.res({
-      image: <div style={{ color: 'white', textAlign: 'center' }}>You have already voted!</div>,
+      image: (
+        <div style={{ color: 'white', textAlign: 'center', fontSize: '24px' }}>
+          Each user can vote only once!
+        </div>
+      ),
     });
   }
 
@@ -114,9 +118,10 @@ app.frame('/', (c) => {
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
 
   // ایجاد متن کست با نام نامزد و آدرس فریم
+  const frameUrl = 'https://election-u-s.onrender.com';
   const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
     selectedCandidate
-  )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A https://election-u-s.onrender.com`;
+  )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A${encodeURIComponent(frameUrl)}`;
 
   return c.res({
     image: (
@@ -165,7 +170,7 @@ app.frame('/', (c) => {
     ),
     intents: showThirdPage
       ? [
-          <Button.Link href={composeCastUrl}>Share</Button.Link> // دکمه "Share" با متن انگلیسی
+          <Button.Link href={composeCastUrl}>Share</Button.Link> // دکمه "Share" با متن انگلیسی و لینک
         ]
       : hasSelected
       ? [
