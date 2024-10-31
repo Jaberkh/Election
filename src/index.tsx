@@ -117,12 +117,11 @@ app.frame('/', (c) => {
   const harrisPercent = totalVotes ? Math.round((votes.harris / totalVotes) * 100) : 0;
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
 
-  // ایجاد متن کست با نام نامزد و آدرس فریم
+  // ایجاد لینک کست با فاصله‌ها و لینک فریم
   const frameUrl = 'https://election-u-s.onrender.com';
   const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
     selectedCandidate
-  )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A\n${encodeURIComponent(frameUrl)}`;
-
+  )}%2C%20what’s%20your%20opinion%3F%0A%0AFrame%20By%20@Jeyloo%0A%0A${encodeURIComponent(frameUrl)}`;
 
   return c.res({
     image: (
@@ -170,21 +169,17 @@ app.frame('/', (c) => {
       </div>
     ),
     intents: showThirdPage
-  ? [
-      <div>
-        <span>Frame By @jayloo</span><br />
-        <Button.Link href={composeCastUrl}>Share</Button.Link>
-      </div>
-    ]
-  : hasSelected
-  ? [
-      <Button value="harris">Harris</Button>,
-      <Button value="trump">Trump</Button>,
-    ]
-  : [
-      <Button value="select">Vote</Button>,
-    ],
-
+      ? [
+          <Button.Link href={composeCastUrl}>Share</Button.Link> // دکمه "Share" با متن انگلیسی و لینک
+        ]
+      : hasSelected
+      ? [
+          <Button value="harris">Harris</Button>,
+          <Button value="trump">Trump</Button>,
+        ]
+      : [
+          <Button value="select">Vote</Button>,
+        ],
   });
 });
 
