@@ -80,7 +80,7 @@ app.frame('/', (c) => {
 const frameImageUrl = 'https://i.imgur.com/yourFrameImage.png'; // لینک تصویر فریم
 const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
   selectedCandidate
-)}%2C%20what’s%20your%20opinion%3F%0A%0AFrame%20By%20@Jeyloo%0A%0A${encodeURIComponent(frameImageUrl)}`;
+)}%2C%20what’s%20your%20opinion%3F%0A%0AFrame%20By%20@Jeyloo%0A%0A https://election-u-s.onrender.com`;
 
 
 
