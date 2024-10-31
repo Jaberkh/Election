@@ -88,30 +88,30 @@ app.frame('/', (c) => {
   let selectedCandidate = '';
 
   // بررسی fid کاربر قبل از ثبت رای
-  const fid = frameData?.fid;
-  if (fid !== undefined && votedFids.has(fid)) { // اطمینان از عدم undefined بودن fid
-    return c.res({
-      image: (
-        <div style={{ color: 'white', textAlign: 'center', fontSize: '24px' }}>
-          Each user can vote only once!
-        </div>
-      ),
-    });
-  }
+  // const fid = frameData?.fid;
+  // if (fid !== undefined && votedFids.has(fid)) { // اطمینان از عدم undefined بودن fid
+  //   return c.res({
+  //     image: (
+  //       <div style={{ color: 'white', textAlign: 'center', fontSize: '24px' }}>
+  //         Each user can vote only once!
+  //       </div>
+  //     ),
+  //   });
+  // }
 
-  if (buttonValue === 'harris') {
-    votes.harris += 1;
-    selectedCandidate = 'Harris';
-    if (fid !== undefined) votedFids.add(fid); // افزودن fid به فهرست در صورت عدم undefined بودن
-    saveVotes(votes);
-    saveVotedFids(votedFids);
-  } else if (buttonValue === 'trump') {
-    votes.trump += 1;
-    selectedCandidate = 'Trump';
-    if (fid !== undefined) votedFids.add(fid);
-    saveVotes(votes);
-    saveVotedFids(votedFids);
-  }
+  // if (buttonValue === 'harris') {
+  //   votes.harris += 1;
+  //   selectedCandidate = 'Harris';
+  //   if (fid !== undefined) votedFids.add(fid); // افزودن fid به فهرست در صورت عدم undefined بودن
+  //   saveVotes(votes);
+  //   saveVotedFids(votedFids);
+  // } else if (buttonValue === 'trump') {
+  //   votes.trump += 1;
+  //   selectedCandidate = 'Trump';
+  //   if (fid !== undefined) votedFids.add(fid);
+  //   saveVotes(votes);
+  //   saveVotedFids(votedFids);
+  // }
 
   const totalVotes = votes.harris + votes.trump;
   const harrisPercent = totalVotes ? Math.round((votes.harris / totalVotes) * 100) : 0;
