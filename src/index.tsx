@@ -13,6 +13,8 @@ export const app = new Frog({
 });
 
 type Votes = { harris: number; trump: number };
+type VotedFid = { fid: number; count: number }; // نوع جدید برای هر رای‌دهنده
+
 const votesFilePath = './votes.json';
 const votedFidsFilePath = './votedFids.json';
 
@@ -29,18 +31,19 @@ function saveVotes(votes: Votes) {
   fs.writeFileSync(votesFilePath, JSON.stringify(votes, null, 2));
 }
 
-function loadVotedFids(): Set<number> {
+function loadVotedFids(): Map<number, number> {
   if (!fs.existsSync(votedFidsFilePath)) fs.writeFileSync(votedFidsFilePath, JSON.stringify([]));
-  const data = fs.readFileSync(votedFidsFilePath, 'utf-8');
-  return new Set(JSON.parse(data));
+  const data = JSON.parse(fs.readFileSync(votedFidsFilePath, 'utf-8'));
+  return new Map(data.map((entry: VotedFid) => [entry.fid, entry.count]));
 }
 
-function saveVotedFids(votedFids: Set<number>) {
-  fs.writeFileSync(votedFidsFilePath, JSON.stringify([...votedFids]));
+function saveVotedFids(votedFids: Map<number, number>) {
+  const data = Array.from(votedFids.entries()).map(([fid, count]) => ({ fid, count }));
+  fs.writeFileSync(votedFidsFilePath, JSON.stringify(data));
 }
 
 let votes: Votes = loadVotes();
-let votedFids: Set<number> = loadVotedFids();
+let votedFids: Map<number, number> = loadVotedFids();
 
 app.use('/*', serveStatic({ root: './public' }));
 
@@ -52,24 +55,29 @@ app.frame('/', (c) => {
 
   let selectedCandidate = '';
   const fid = frameData?.fid;
-  if (fid !== undefined && votedFids.has(fid)) {
-    return c.res({
-      image: <div style={{ color: 'white', textAlign: 'center', fontSize: '24px' }}>Each user can vote only once!</div>,
-    });
-  }
 
-  if (buttonValue === 'harris') {
-    votes.harris += 1;
-    selectedCandidate = 'Harris';
-    if (fid !== undefined) votedFids.add(fid);
-    saveVotes(votes);
-    saveVotedFids(votedFids);
-  } else if (buttonValue === 'trump') {
-    votes.trump += 1;
-    selectedCandidate = 'Trump';
-    if (fid !== undefined) votedFids.add(fid);
-    saveVotes(votes);
-    saveVotedFids(votedFids);
+  // چک کردن تعداد رای‌های هر کاربر و محدودیت ۱۰ رای
+  if (fid !== undefined) {
+    const voteCount = votedFids.get(fid) || 0;
+    if (voteCount >= 10) {
+      return c.res({
+        image: <div style={{ color: 'white', textAlign: 'center', fontSize: '24px' }}>You can only vote 10 times!</div>,
+      });
+    }
+
+    if (buttonValue === 'harris') {
+      votes.harris += 1;
+      selectedCandidate = 'Harris';
+      votedFids.set(fid, voteCount + 1);
+      saveVotes(votes);
+      saveVotedFids(votedFids);
+    } else if (buttonValue === 'trump') {
+      votes.trump += 1;
+      selectedCandidate = 'Trump';
+      votedFids.set(fid, voteCount + 1);
+      saveVotes(votes);
+      saveVotedFids(votedFids);
+    }
   }
 
   const totalVotes = votes.harris + votes.trump;
@@ -80,7 +88,6 @@ app.frame('/', (c) => {
   const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
     selectedCandidate
   )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A\n${encodeURIComponent(frameUrl)}`;
-
 
   return c.res({
     image: (
