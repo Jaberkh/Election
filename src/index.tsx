@@ -20,6 +20,7 @@ type Votes = {
 
 // مسیر فایل JSON برای ذخیره رای‌ها
 const votesFilePath = './votes.json';
+const votedFidsFilePath = './votedFids.json'; // فایل برای ذخیره fid کاربرانی که رای داده‌اند
 
 // تابع برای خواندن رای‌ها از فایل JSON
 function loadVotes(): Votes {
@@ -32,21 +33,42 @@ function loadVotes(): Votes {
   }
 }
 
-// تابع برای ذخیره رای‌ها در فایل JSON و چاپ درصدها در کنسول
+// تابع برای ذخیره رای‌ها در فایل JSON
 function saveVotes(votes: Votes) {
   try {
     fs.writeFileSync(votesFilePath, JSON.stringify(votes, null, 2));
-    const totalVotes = votes.harris + votes.trump;
-    const harrisPercent = totalVotes ? Math.round((votes.harris / totalVotes) * 100) : 0;
-    const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
-    console.log(`Updated votes: Harris - ${votes.harris} (${harrisPercent}%), Trump - ${votes.trump} (${trumpPercent}%)`);
   } catch (error) {
     console.error("Error saving votes file:", error);
   }
 }
 
-// بارگذاری رای‌ها از فایل JSON
+// تابع برای بارگذاری فهرست fid‌های رای‌داده‌شده
+function loadVotedFids(): Set<number> {
+  try {
+    if (!fs.existsSync(votedFidsFilePath)) {
+      // اگر فایل وجود ندارد، یک فایل خالی ایجاد می‌کنیم
+      fs.writeFileSync(votedFidsFilePath, JSON.stringify([]));
+    }
+    const data = fs.readFileSync(votedFidsFilePath, 'utf-8');
+    return new Set(JSON.parse(data));
+  } catch (error) {
+    console.error("Error reading votedFids file:", error);
+    return new Set();
+  }
+}
+
+// تابع برای ذخیره فهرست fid‌های رای‌داده‌شده
+function saveVotedFids(votedFids: Set<number>) {
+  try {
+    fs.writeFileSync(votedFidsFilePath, JSON.stringify([...votedFids]));
+  } catch (error) {
+    console.error("Error saving votedFids file:", error);
+  }
+}
+
+// بارگذاری رای‌ها و فهرست fid‌ها از فایل‌ها
 let votes: Votes = loadVotes();
+let votedFids: Set<number> = loadVotedFids();
 
 app.use('/*', serveStatic({ root: './public' }));
 
@@ -64,21 +86,34 @@ app.frame('/', (c) => {
     : 'https://i.imgur.com/bLVqRNb.png';
 
   let selectedCandidate = '';
+
+  // بررسی fid کاربر قبل از ثبت رای
+  const fid = frameData?.fid;
+  if (fid !== undefined && votedFids.has(fid)) { // اطمینان از عدم undefined بودن fid
+    return c.res({
+      image: <div style={{ color: 'white', textAlign: 'center' }}>You have already voted!</div>,
+    });
+  }
+
   if (buttonValue === 'harris') {
     votes.harris += 1;
     selectedCandidate = 'Harris';
+    if (fid !== undefined) votedFids.add(fid); // افزودن fid به فهرست در صورت عدم undefined بودن
     saveVotes(votes);
+    saveVotedFids(votedFids);
   } else if (buttonValue === 'trump') {
     votes.trump += 1;
     selectedCandidate = 'Trump';
+    if (fid !== undefined) votedFids.add(fid);
     saveVotes(votes);
+    saveVotedFids(votedFids);
   }
 
   const totalVotes = votes.harris + votes.trump;
   const harrisPercent = totalVotes ? Math.round((votes.harris / totalVotes) * 100) : 0;
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
 
-  // ایجاد متن کست به انگلیسی
+  // ایجاد متن کست با نام نامزد و آدرس فریم
   const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
     selectedCandidate
   )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0Ahttps://election-u-s.onrender.com`;
