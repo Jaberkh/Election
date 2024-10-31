@@ -121,7 +121,9 @@ app.frame('/', (c) => {
   const frameUrl = 'https://election-u-s.onrender.com';
   const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
     selectedCandidate
-  )}%2C%20what’s%20your%20opinion%3F%0A%0AFrame%20By%20@Jeyloo%0A%0A${encodeURIComponent(frameUrl)}`;
+  )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A\n${encodeURIComponent(frameUrl)}`;
+
+  
 
   return c.res({
     image: (
@@ -169,22 +171,45 @@ app.frame('/', (c) => {
       </div>
     ),
     intents: showThirdPage
-  ? [
-      <div>
-        <span>Frame By @jayloo</span><br />
-        <Button.Link href={composeCastUrl}>Share</Button.Link>
-      </div>
-    ]
-  : hasSelected
-  ? [
-      <Button value="harris">Harris</Button>,
-      <Button value="trump">Trump</Button>,
-    ]
-  : [
-      <Button value="select">Vote</Button>,
-    ],
-
+    ? [
+        <div>
+          <span>Frame By @jayloo</span><br />
+          <Button.Link href={composeCastUrl}>Share</Button.Link>
+        </div>
+      ]
+    : hasSelected
+    ? [
+        <Button value="harris">Harris</Button>,
+        <Button value="trump">Trump</Button>,
+      ]
+    : [
+        <Button value="select">Vote</Button>,
+      ],
+  
   });
+});
+
+// اضافه کردن متادیتای Open Graph در فایل HTML اصلی برای نمایش پیش‌نمایش لینک در Warpcast
+app.get('/public/index.html', async (c) => {
+  return c.html(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Voting Frame</title>
+      <!-- متادیتای Open Graph برای نمایش پیش‌نمایش لینک -->
+      <meta property="og:title" content="Voting Frame" />
+      <meta property="og:description" content="Cast your vote for the candidate of your choice!" />
+      <meta property="og:image" content="https://i.imgur.com/yourFrameImage.png" /> <!-- لینک تصویر -->
+      <meta property="og:url" content="https://election-u-s.onrender.com" />
+    </head>
+    <body>
+      <h1>Voting Frame</h1>
+      <p>Cast your vote for your favorite candidate!</p>
+    </body>
+    </html>
+  `);
 });
 
 const port = 3000;
