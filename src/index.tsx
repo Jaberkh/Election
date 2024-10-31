@@ -72,6 +72,38 @@ let votedFids: Set<number> = loadVotedFids();
 
 app.use('/*', serveStatic({ root: './public' }));
 
+// افزودن متا تگ‌ها در صفحه اصلی (روت)
+app.get('/', (c) => {
+  return c.html(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Voting Frame by Jeyloo</title>
+
+      <!-- Open Graph Meta Tags -->
+      <meta property="og:title" content="Voting Frame by Jeyloo" />
+      <meta property="og:description" content="I voted, what's your opinion? Vote and share your thoughts!" />
+      <meta property="og:image" content="https://i.imgur.com/HZG1uOl.png" />
+      <meta property="og:url" content="https://election-u-s.onrender.com" />
+      <meta property="og:type" content="website" />
+
+      <!-- Optional Twitter Card Meta Tags -->
+      <meta name="twitter:card" content="summary_large_image">
+      <meta name="twitter:title" content="Voting Frame by Jeyloo">
+      <meta name="twitter:description" content="I voted, what's your opinion? Vote and share your thoughts!">
+      <meta name="twitter:image" content="https://i.imgur.com/HZG1uOl.png">
+
+    </head>
+    <body>
+      <div id="app"></div>
+      <script type="module" src="main.js"></script>
+    </body>
+    </html>
+  `);
+});
+
 // مسیر اصلی فریم
 app.frame('/', (c) => {
   const { frameData, verified, buttonValue } = c;
