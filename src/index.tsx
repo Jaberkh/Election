@@ -116,7 +116,7 @@ app.frame('/', (c) => {
   // ایجاد متن کست با نام نامزد و آدرس فریم
   const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
     selectedCandidate
-  )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0Ahttps://election-u-s.onrender.com`;
+  )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A https://election-u-s.onrender.com`;
 
   return c.res({
     image: (
