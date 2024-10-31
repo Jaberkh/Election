@@ -88,30 +88,30 @@ app.frame('/', (c) => {
   let selectedCandidate = '';
 
   // بررسی fid کاربر قبل از ثبت رای
-  // const fid = frameData?.fid;
-  // if (fid !== undefined && votedFids.has(fid)) { // اطمینان از عدم undefined بودن fid
-  //   return c.res({
-  //     image: (
-  //       <div style={{ color: 'white', textAlign: 'center', fontSize: '24px' }}>
-  //         Each user can vote only once!
-  //       </div>
-  //     ),
-  //   });
-  // }
+  const fid = frameData?.fid;
+  if (fid !== undefined && votedFids.has(fid)) { // اطمینان از عدم undefined بودن fid
+    return c.res({
+      image: (
+        <div style={{ color: 'white', textAlign: 'center', fontSize: '24px' }}>
+          Each user can vote only once!
+        </div>
+      ),
+    });
+  }
 
-  // if (buttonValue === 'harris') {
-  //   votes.harris += 1;
-  //   selectedCandidate = 'Harris';
-  //   if (fid !== undefined) votedFids.add(fid); // افزودن fid به فهرست در صورت عدم undefined بودن
-  //   saveVotes(votes);
-  //   saveVotedFids(votedFids);
-  // } else if (buttonValue === 'trump') {
-  //   votes.trump += 1;
-  //   selectedCandidate = 'Trump';
-  //   if (fid !== undefined) votedFids.add(fid);
-  //   saveVotes(votes);
-  //   saveVotedFids(votedFids);
-  // }
+  if (buttonValue === 'harris') {
+    votes.harris += 1;
+    selectedCandidate = 'Harris';
+    if (fid !== undefined) votedFids.add(fid); // افزودن fid به فهرست در صورت عدم undefined بودن
+    saveVotes(votes);
+    saveVotedFids(votedFids);
+  } else if (buttonValue === 'trump') {
+    votes.trump += 1;
+    selectedCandidate = 'Trump';
+    if (fid !== undefined) votedFids.add(fid);
+    saveVotes(votes);
+    saveVotedFids(votedFids);
+  }
 
   const totalVotes = votes.harris + votes.trump;
   const harrisPercent = totalVotes ? Math.round((votes.harris / totalVotes) * 100) : 0;
@@ -121,8 +121,7 @@ app.frame('/', (c) => {
   const frameUrl = 'https://election-u-s.onrender.com';
   const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
     selectedCandidate
-  )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A\n${encodeURIComponent(frameUrl)}`;
-
+  )}%2C%20what’s%20your%20opinion%3F%0A%0AFrame%20By%20@Jeyloo%0A%0A${encodeURIComponent(frameUrl)}`;
 
   return c.res({
     image: (
