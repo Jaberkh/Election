@@ -110,22 +110,22 @@ app.frame('/', (c) => {
     selectedCandidate
   )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A https://election-u-s.onrender.com`;
 
- return c.res({
-  image: imageUrl,  // ارسال URL تصویر مستقیماً به عنوان مقدار image
-  intents: showThirdPage
-    ? [
-        <Button.Link href={composeCastUrl}>Share</Button.Link>
-      ]
-    : hasSelected
-    ? [
-        <Button value="harris">Harris</Button>,
-        <Button value="trump">Trump</Button>,
-      ]
-    : [
-        <Button value="select">Vote</Button>,
-      ],
-});
-
+  return c.res({
+    image: imageUrl,  // ارسال URL تصویر مستقیماً به عنوان مقدار image
+    intents: showThirdPage
+      ? [
+          <Button.Link href={composeCastUrl}>Share</Button.Link>
+        ]
+      : hasSelected
+      ? [
+          <Button value="harris">Harris</Button>,
+          <Button value="trump">Trump</Button>,
+        ]
+      : [
+          <Button value="select">Vote</Button>,
+        ],
+  });
+  
 });
 
 const port = 3000;
