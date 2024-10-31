@@ -181,17 +181,21 @@ if (fid !== undefined && votedFids.has(fid)) { // اطمینان از عدم und
       </div>
     ),
     intents: showThirdPage
-      ? [
-          <Button.Link href={composeCastUrl}>Share</Button.Link> // دکمه "Share" با متن انگلیسی و لینک
-        ]
-      : hasSelected
-      ? [
-          <Button value="harris">Harris</Button>,
-          <Button value="trump">Trump</Button>,
-        ]
-      : [
-          <Button value="select">Vote</Button>,
-        ],
+  ? [
+      <div>
+        <span>Frame By @jayloo</span><br />
+        <Button.Link href={composeCastUrl}>Share</Button.Link>
+      </div>
+    ]
+  : hasSelected
+  ? [
+      <Button value="harris">Harris</Button>,
+      <Button value="trump">Trump</Button>,
+    ]
+  : [
+      <Button value="select">Vote</Button>,
+    ],
+
   });
 });
 
