@@ -77,9 +77,12 @@ app.frame('/', (c) => {
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
 
   const frameUrl = 'https://election-u-s.onrender.com';
+const frameImageUrl = 'https://i.imgur.com/yourFrameImage.png'; // لینک تصویر فریم
 const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
   selectedCandidate
-)}%2C%20what’s%20your%20opinion%3F%0A%0AFrame%20By%20@Jeyloo%0A%0A%0A${encodeURIComponent(frameUrl)}`;
+)}%2C%20what’s%20your%20opinion%3F%0A%0AFrame%20By%20@Jeyloo%0A%0A${encodeURIComponent(frameImageUrl)}`;
+
+
 
 
   return c.res({
