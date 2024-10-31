@@ -78,8 +78,6 @@ app.frame('/', (c) => {
   const harrisPercent = totalVotes ? Math.round((votes.harris / totalVotes) * 100) : 0;
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
 
-  const frameUrl = 'https://election-u-s.onrender.com';
-
   return c.res({
     image: (
       <div
@@ -127,7 +125,7 @@ app.frame('/', (c) => {
     ),
     intents: showThirdPage
       ? [
-          <Button action="link" value={composeCastUrl}>Share</Button> // استفاده از value به جای target
+          <Button action="post_redirect" value="/api/share-cast">Share</Button> // تنظیم دکمه "Share" به صورت post_redirect
         ]
       : hasSelected
       ? [
@@ -138,6 +136,12 @@ app.frame('/', (c) => {
           <Button value="select">Vote</Button>,
         ],
   });
+});
+
+// مسیر برای هدایت درخواست post_redirect
+app.post('/api/share-cast', (c) => {
+  // هدایت کاربر به لینک compose
+  return c.redirect(composeCastUrl);
 });
 
 const port = 3000;
