@@ -121,7 +121,8 @@ app.frame('/', (c) => {
   const frameUrl = 'https://election-u-s.onrender.com';
   const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
     selectedCandidate
-  )}%2C%20what’s%20your%20opinion%3F%0A%0AFrame%20By%20@Jeyloo%0A%0A${encodeURIComponent(frameUrl)}`;
+  )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A\n${encodeURIComponent(frameUrl)}`;
+
 
   return c.res({
     image: (
@@ -169,17 +170,21 @@ app.frame('/', (c) => {
       </div>
     ),
     intents: showThirdPage
-      ? [
-          <Button.Link href={composeCastUrl}>Share</Button.Link> // دکمه "Share" با متن انگلیسی و لینک
-        ]
-      : hasSelected
-      ? [
-          <Button value="harris">Harris</Button>,
-          <Button value="trump">Trump</Button>,
-        ]
-      : [
-          <Button value="select">Vote</Button>,
-        ],
+  ? [
+      <div>
+        <span>Frame By @jayloo</span><br />
+        <Button.Link href={composeCastUrl}>Share</Button.Link>
+      </div>
+    ]
+  : hasSelected
+  ? [
+      <Button value="harris">Harris</Button>,
+      <Button value="trump">Trump</Button>,
+    ]
+  : [
+      <Button value="select">Vote</Button>,
+    ],
+
   });
 });
 
