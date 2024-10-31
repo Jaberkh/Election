@@ -87,17 +87,29 @@ app.frame('/', (c) => {
 
   let selectedCandidate = '';
 
-  // بررسی fid کاربر قبل از ثبت رای
-  const fid = frameData?.fid;
-  if (fid !== undefined && votedFids.has(fid)) { // اطمینان از عدم undefined بودن fid
-    return c.res({
-      image: (
-        <div style={{ color: 'white', textAlign: 'center', fontSize: '24px' }}>
-          Each user can vote only once!
-        </div>
-      ),
-    });
-  }
+ const fid = frameData?.fid;
+if (fid !== undefined && votedFids.has(fid)) { // اطمینان از عدم undefined بودن fid
+  return c.res({
+    image: (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          textAlign: 'center',
+          fontSize: '24px',
+          height: '100%',  // پر کردن ارتفاع برای مرکزیت عمودی
+          width: '100%',   // پر کردن عرض برای مرکزیت افقی
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',  // پس‌زمینه نیمه‌شفاف برای خوانایی
+        }}
+      >
+        Each user can vote only once!
+      </div>
+    ),
+  });
+}
+
 
   if (buttonValue === 'harris') {
     votes.harris += 1;
@@ -121,7 +133,7 @@ app.frame('/', (c) => {
   const frameUrl = 'https://election-u-s.onrender.com';
   const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
     selectedCandidate
-  )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A${encodeURIComponent(frameUrl)}`;
+  )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A\n${encodeURIComponent(frameUrl)}`;
 
   return c.res({
     image: (
