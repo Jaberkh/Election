@@ -77,7 +77,10 @@ app.frame('/', (c) => {
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
 
   const frameUrl = 'https://election-u-s.onrender.com';
-  const composeCastUrl = `${frameUrl}?text=I%20voted%20for%20${encodeURIComponent(selectedCandidate)},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo`;
+  const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
+    selectedCandidate
+  )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A\n${encodeURIComponent(frameUrl)}`;
+
 
   return c.res({
     image: (
@@ -91,7 +94,22 @@ app.frame('/', (c) => {
         )}
       </div>
     ),
-    intents: showThirdPage ? [<Button.Link href={composeCastUrl}>Share</Button.Link>] : hasSelected ? [<Button value="harris">Harris</Button>, <Button value="trump">Trump</Button>] : [<Button value="select">Vote</Button>],
+    intents: showThirdPage
+  ? [
+      <div>
+        <span>Frame By @jayloo</span><br />
+        <Button.Link href={composeCastUrl}>Share</Button.Link>
+      </div>
+    ]
+  : hasSelected
+  ? [
+      <Button value="harris">Harris</Button>,
+      <Button value="trump">Trump</Button>,
+    ]
+  : [
+      <Button value="select">Vote</Button>,
+    ],
+
   });
 });
 
