@@ -127,8 +127,7 @@ app.frame('/', (c) => {
     ),
     intents: showThirdPage
       ? [
-          <Button action="link" value={composeCastUrl}>Share</Button> // دکمه "Share" برای ایجاد کست جدید
-          
+          <Button action="link" value={composeCastUrl}>Share</Button> // استفاده از value به جای target
         ]
       : hasSelected
       ? [
