@@ -48,12 +48,8 @@ function saveVotes(votes: Votes) {
 // بارگذاری رای‌ها از فایل JSON
 let votes: Votes = loadVotes();
 
-// ایجاد URL برای هدایت به صفحه ایجاد کست جدید
-function generateNewCastUrl(candidate: string, frameUrl: string): string {
-  const text = `I voted for ${candidate}\n\nCheck it out: ${frameUrl}`;
-  const encodedText = encodeURIComponent(text);
-  return `https://warpcast.com/~/compose?text=Hello%20world!&embeds[]=https://election-u-s.onrender.com`;
-}
+// ایجاد URL برای هدایت به صفحه compose کست جدید
+const composeCastUrl = 'https://warpcast.com/~/compose?text=I%20Voted%20To%20me';
 
 app.use('/*', serveStatic({ root: './public' }));
 
@@ -83,7 +79,6 @@ app.frame('/', (c) => {
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
 
   const frameUrl = 'https://election-u-s.onrender.com';
-  const newCastUrl = generateNewCastUrl(votes.harris > votes.trump ? 'Harris' : 'Trump', frameUrl);
 
   return c.res({
     image: (
@@ -132,13 +127,8 @@ app.frame('/', (c) => {
     ),
     intents: showThirdPage
       ? [
-          <Button
-            action="link" // استفاده از اکشن "link"
-            value={newCastUrl} // هدایت به صفحه ایجاد کست جدید
-          >
-            Share Cast
-          </Button>, 
-          <Button action="link" value="https://warpcast.com/~/profiles/jeyloo">Follow Me</Button>
+          <Button action="link" value={composeCastUrl}>Share</Button> // دکمه "Share" برای ایجاد کست جدید
+          
         ]
       : hasSelected
       ? [
