@@ -48,9 +48,6 @@ function saveVotes(votes: Votes) {
 // بارگذاری رای‌ها از فایل JSON
 let votes: Votes = loadVotes();
 
-// ایجاد URL برای هدایت به صفحه compose کست جدید
-const composeCastUrl = 'https://warpcast.com/~/compose?text=I%20Voted%20To%20me';
-
 app.use('/*', serveStatic({ root: './public' }));
 
 // مسیر اصلی فریم
@@ -66,11 +63,14 @@ app.frame('/', (c) => {
     ? 'https://i.imgur.com/be4kQO3.png'
     : 'https://i.imgur.com/bLVqRNb.png';
 
+  let selectedCandidate = '';
   if (buttonValue === 'harris') {
     votes.harris += 1;
+    selectedCandidate = 'Harris';
     saveVotes(votes);
   } else if (buttonValue === 'trump') {
     votes.trump += 1;
+    selectedCandidate = 'Trump';
     saveVotes(votes);
   }
 
@@ -78,7 +78,10 @@ app.frame('/', (c) => {
   const harrisPercent = totalVotes ? Math.round((votes.harris / totalVotes) * 100) : 0;
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
 
-  const frameUrl = 'https://election-u-s.onrender.com';
+  // ایجاد متن کست به انگلیسی
+  const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
+    selectedCandidate
+  )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0Ahttps://election-u-s.onrender.com`;
 
   return c.res({
     image: (
@@ -127,7 +130,7 @@ app.frame('/', (c) => {
     ),
     intents: showThirdPage
       ? [
-          <Button.Link href={composeCastUrl}>Share</Button.Link> // استفاده از Button.Link با ویژگی href
+          <Button.Link href={composeCastUrl}>Share</Button.Link> // دکمه "Share" با متن انگلیسی
         ]
       : hasSelected
       ? [
