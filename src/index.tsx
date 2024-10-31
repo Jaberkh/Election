@@ -87,43 +87,43 @@ app.frame('/', (c) => {
 
   let selectedCandidate = '';
 
-//  const fid = frameData?.fid;
-// if (fid !== undefined && votedFids.has(fid)) { // اطمینان از عدم undefined بودن fid
-//   return c.res({
-//     image: (
-//       <div
-//         style={{
-//           display: 'flex',
-//           alignItems: 'center',
-//           justifyContent: 'center',
-//           color: 'white',
-//           textAlign: 'center',
-//           fontSize: '24px',
-//           height: '100%',  // پر کردن ارتفاع برای مرکزیت عمودی
-//           width: '100%',   // پر کردن عرض برای مرکزیت افقی
-//           backgroundColor: 'rgba(0, 0, 0, 0.8)',  // پس‌زمینه نیمه‌شفاف برای خوانایی
-//         }}
-      // >
-  //       Each user can vote only once!
-  //     </div>
-    //  ),
-  //  });
-// }
+ const fid = frameData?.fid;
+if (fid !== undefined && votedFids.has(fid)) { // اطمینان از عدم undefined بودن fid
+  return c.res({
+    image: (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          textAlign: 'center',
+          fontSize: '24px',
+          height: '100%',  // پر کردن ارتفاع برای مرکزیت عمودی
+          width: '100%',   // پر کردن عرض برای مرکزیت افقی
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',  // پس‌زمینه نیمه‌شفاف برای خوانایی
+        }}
+      >
+        Each user can vote only once!
+      </div>
+    ),
+  });
+}
 
 
-  // if (buttonValue === 'harris') {
-  //   votes.harris += 1;
-  //   selectedCandidate = 'Harris';
-  //   if (fid !== undefined) votedFids.add(fid); // افزودن fid به فهرست در صورت عدم undefined بودن
-  //   saveVotes(votes);
-  //   saveVotedFids(votedFids);
-  // } else if (buttonValue === 'trump') {
-  //   votes.trump += 1;
-  //   selectedCandidate = 'Trump';
-  //   if (fid !== undefined) votedFids.add(fid);
-  //   saveVotes(votes);
-  //   saveVotedFids(votedFids);
-  // }
+  if (buttonValue === 'harris') {
+    votes.harris += 1;
+    selectedCandidate = 'Harris';
+    if (fid !== undefined) votedFids.add(fid); // افزودن fid به فهرست در صورت عدم undefined بودن
+    saveVotes(votes);
+    saveVotedFids(votedFids);
+  } else if (buttonValue === 'trump') {
+    votes.trump += 1;
+    selectedCandidate = 'Trump';
+    if (fid !== undefined) votedFids.add(fid);
+    saveVotes(votes);
+    saveVotedFids(votedFids);
+  }
 
   const totalVotes = votes.harris + votes.trump;
   const harrisPercent = totalVotes ? Math.round((votes.harris / totalVotes) * 100) : 0;
