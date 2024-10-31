@@ -183,6 +183,29 @@ app.frame('/', (c) => {
   });
 });
 
+// اضافه کردن متادیتای Open Graph در فایل HTML اصلی برای نمایش پیش‌نمایش لینک در Warpcast
+app.get('/public/index.html', async (c) => {
+  return c.html(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Voting Frame</title>
+      <!-- متادیتای Open Graph برای نمایش پیش‌نمایش لینک -->
+      <meta property="og:title" content="Voting Frame" />
+      <meta property="og:description" content="Cast your vote for the candidate of your choice!" />
+      <meta property="og:image" content="https://i.imgur.com/yourFrameImage.png" /> <!-- لینک تصویر -->
+      <meta property="og:url" content="https://election-u-s.onrender.com" />
+    </head>
+    <body>
+      <h1>Voting Frame</h1>
+      <p>Cast your vote for your favorite candidate!</p>
+    </body>
+    </html>
+  `);
+});
+
 const port = 3000;
 console.log(`Server is running on port ${port}`);
 
