@@ -13,8 +13,6 @@ export const app = new Frog({
 });
 
 type Votes = { harris: number; trump: number };
-type VotedFid = { fid: number; count: number }; // نوع جدید برای هر رای‌دهنده
-
 const votesFilePath = './votes.json';
 const votedFidsFilePath = './votedFids.json';
 
@@ -31,19 +29,18 @@ function saveVotes(votes: Votes) {
   fs.writeFileSync(votesFilePath, JSON.stringify(votes, null, 2));
 }
 
-function loadVotedFids(): Map<number, number> {
+function loadVotedFids(): Set<number> {
   if (!fs.existsSync(votedFidsFilePath)) fs.writeFileSync(votedFidsFilePath, JSON.stringify([]));
-  const data = JSON.parse(fs.readFileSync(votedFidsFilePath, 'utf-8'));
-  return new Map(data.map((entry: VotedFid) => [entry.fid, entry.count]));
+  const data = fs.readFileSync(votedFidsFilePath, 'utf-8');
+  return new Set(JSON.parse(data));
 }
 
-function saveVotedFids(votedFids: Map<number, number>) {
-  const data = Array.from(votedFids.entries()).map(([fid, count]) => ({ fid, count }));
-  fs.writeFileSync(votedFidsFilePath, JSON.stringify(data));
+function saveVotedFids(votedFids: Set<number>) {
+  fs.writeFileSync(votedFidsFilePath, JSON.stringify([...votedFids]));
 }
 
 let votes: Votes = loadVotes();
-let votedFids: Map<number, number> = loadVotedFids();
+let votedFids: Set<number> = loadVotedFids();
 
 app.use('/*', serveStatic({ root: './public' }));
 
@@ -54,40 +51,33 @@ app.frame('/', (c) => {
   const imageUrl = showThirdPage ? 'https://i.imgur.com/HZG1uOl.png' : hasSelected ? 'https://i.imgur.com/be4kQO3.png' : 'https://i.imgur.com/bLVqRNb.png';
 
   let selectedCandidate = '';
-  const fid = frameData?.fid;
+  // const fid = frameData?.fid;
+  // if (fid !== undefined && votedFids.has(fid)) {
+  //   return c.res({
+  //     image: <div style={{ color: 'white', textAlign: 'center', fontSize: '24px' }}>Each user can vote only once!</div>,
+  //   });
+  // }
 
-  // چک کردن تعداد رای‌های هر کاربر و محدودیت ۱۰ رای
-  if (fid !== undefined) {
-    const voteCount = votedFids.get(fid) || 0;
-    if (voteCount >= 10) {
-      return c.res({
-        image: <div style={{ color: 'white', textAlign: 'center', fontSize: '24px' }}>You can only vote 10 times!</div>,
-      });
-    }
-
-    if (buttonValue === 'harris') {
-      votes.harris += 1;
-      selectedCandidate = 'Harris';
-      votedFids.set(fid, voteCount + 1);
-      saveVotes(votes);
-      saveVotedFids(votedFids);
-    } else if (buttonValue === 'trump') {
-      votes.trump += 1;
-      selectedCandidate = 'Trump';
-      votedFids.set(fid, voteCount + 1);
-      saveVotes(votes);
-      saveVotedFids(votedFids);
-    }
-  }
+  // if (buttonValue === 'harris') {
+  //   votes.harris += 1;
+  //   selectedCandidate = 'Harris';
+  //   if (fid !== undefined) votedFids.add(fid);
+  //   saveVotes(votes);
+  //   saveVotedFids(votedFids);
+  // } else if (buttonValue === 'trump') {
+  //   votes.trump += 1;
+  //   selectedCandidate = 'Trump';
+  //   if (fid !== undefined) votedFids.add(fid);
+  //   saveVotes(votes);
+  //   saveVotedFids(votedFids);
+  // }
 
   const totalVotes = votes.harris + votes.trump;
   const harrisPercent = totalVotes ? Math.round((votes.harris / totalVotes) * 100) : 0;
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
 
   const frameUrl = 'https://election-u-s.onrender.com';
-  const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
-    selectedCandidate
-  )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A\n${encodeURIComponent(frameUrl)}`;
+  const composeCastUrl = `${frameUrl}?text=I%20voted%20for%20${encodeURIComponent(selectedCandidate)},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo`;
 
   return c.res({
     image: (
@@ -101,22 +91,7 @@ app.frame('/', (c) => {
         )}
       </div>
     ),
-    intents: showThirdPage
-  ? [
-      <div>
-        <span>Frame By @jayloo</span><br />
-        <Button.Link href={composeCastUrl}>Share</Button.Link>
-      </div>
-    ]
-  : hasSelected
-  ? [
-      <Button value="harris">Harris</Button>,
-      <Button value="trump">Trump</Button>,
-    ]
-  : [
-      <Button value="select">Vote</Button>,
-    ],
-
+    intents: showThirdPage ? [<Button.Link href={composeCastUrl}>Share</Button.Link>] : hasSelected ? [<Button value="harris">Harris</Button>, <Button value="trump">Trump</Button>] : [<Button value="select">Vote</Button>],
   });
 });
 
