@@ -20,6 +20,7 @@ type Votes = {
 
 // مسیر فایل JSON برای ذخیره رای‌ها
 const votesFilePath = './votes.json';
+const votedFidsFilePath = './votedFids.json'; // فایل برای ذخیره fid کاربرانی که رای داده‌اند
 
 // تابع برای خواندن رای‌ها از فایل JSON
 function loadVotes(): Votes {
@@ -41,8 +42,33 @@ function saveVotes(votes: Votes) {
   }
 }
 
-// بارگذاری رای‌ها از فایل
+// تابع برای بارگذاری فهرست fid‌های رای‌داده‌شده
+function loadVotedFids(): Set<number> {
+  try {
+    if (!fs.existsSync(votedFidsFilePath)) {
+      // اگر فایل وجود ندارد، یک فایل خالی ایجاد می‌کنیم
+      fs.writeFileSync(votedFidsFilePath, JSON.stringify([]));
+    }
+    const data = fs.readFileSync(votedFidsFilePath, 'utf-8');
+    return new Set(JSON.parse(data));
+  } catch (error) {
+    console.error("Error reading votedFids file:", error);
+    return new Set();
+  }
+}
+
+// تابع برای ذخیره فهرست fid‌های رای‌داده‌شده
+function saveVotedFids(votedFids: Set<number>) {
+  try {
+    fs.writeFileSync(votedFidsFilePath, JSON.stringify([...votedFids]));
+  } catch (error) {
+    console.error("Error saving votedFids file:", error);
+  }
+}
+
+// بارگذاری رای‌ها و فهرست fid‌ها از فایل‌ها
 let votes: Votes = loadVotes();
+let votedFids: Set<number> = loadVotedFids();
 
 app.use('/*', serveStatic({ root: './public' }));
 
@@ -78,8 +104,9 @@ app.get('/', (c) => {
   `);
 });
 
+// مسیر اصلی فریم
 app.frame('/', (c) => {
-  const { frameData, buttonValue } = c;
+  const { frameData, verified, buttonValue } = c;
 
   const hasSelected = buttonValue === 'select';
   const showThirdPage = buttonValue === 'harris' || buttonValue === 'trump';
@@ -92,29 +119,85 @@ app.frame('/', (c) => {
 
   let selectedCandidate = '';
 
+  // بررسی fid کاربر قبل از ثبت رای
+  const fid = frameData?.fid;
+  if (fid !== undefined && votedFids.has(fid)) { // اطمینان از عدم undefined بودن fid
+    return c.res({
+      image: <div style={{ color: 'white', textAlign: 'center' }}>You have already voted!</div>,
+    });
+  }
+
   if (buttonValue === 'harris') {
     votes.harris += 1;
     selectedCandidate = 'Harris';
+    if (fid !== undefined) votedFids.add(fid); // افزودن fid به فهرست در صورت عدم undefined بودن
     saveVotes(votes);
+    saveVotedFids(votedFids);
   } else if (buttonValue === 'trump') {
     votes.trump += 1;
     selectedCandidate = 'Trump';
+    if (fid !== undefined) votedFids.add(fid);
     saveVotes(votes);
+    saveVotedFids(votedFids);
   }
 
   const totalVotes = votes.harris + votes.trump;
   const harrisPercent = totalVotes ? Math.round((votes.harris / totalVotes) * 100) : 0;
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
 
+  // ایجاد متن کست با نام نامزد و آدرس فریم
   const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
     selectedCandidate
   )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A https://election-u-s.onrender.com`;
 
   return c.res({
-    image: imageUrl,  // ارسال URL تصویر مستقیماً به عنوان مقدار image
+    image: (
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+          background: 'black',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+        }}
+      >
+        <img
+          src={imageUrl}
+          alt={showThirdPage ? "Thank you for voting!" : ""}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+          }}
+        />
+        {showThirdPage && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '2%',
+              color: 'white',
+              fontSize: '110px',
+              fontStyle: 'normal',
+              letterSpacing: '-0.025em',
+              lineHeight: 1.4,
+              padding: '0 20px',
+              whiteSpace: 'pre-wrap',
+              display: 'flex',
+              gap: '325px',
+            }}
+          >
+            <span>{`${trumpPercent}`}</span>
+            <span>{`${harrisPercent}`}</span>
+          </div>
+        )}
+      </div>
+    ),
     intents: showThirdPage
       ? [
-          <Button.Link href={composeCastUrl}>Share</Button.Link>
+          <Button.Link href={composeCastUrl}>Share</Button.Link> // دکمه "Share" با متن انگلیسی
         ]
       : hasSelected
       ? [
@@ -125,7 +208,6 @@ app.frame('/', (c) => {
           <Button value="select">Vote</Button>,
         ],
   });
-  
 });
 
 const port = 3000;
