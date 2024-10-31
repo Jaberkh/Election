@@ -78,7 +78,6 @@ app.get('/', (c) => {
   `);
 });
 
-// مسیر اصلی فریم
 app.frame('/', (c) => {
   const { frameData, buttonValue } = c;
 
@@ -111,64 +110,22 @@ app.frame('/', (c) => {
     selectedCandidate
   )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A https://election-u-s.onrender.com`;
 
-  return c.res({
-    image: (
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          height: '100%',
-          background: 'black',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center',
-        }}
-      >
-        <img
-          src={imageUrl}
-          alt={showThirdPage ? "Thank you for voting!" : ""}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-          }}
-        />
-        {showThirdPage && (
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '2%',
-              color: 'white',
-              fontSize: '110px',
-              fontStyle: 'normal',
-              letterSpacing: '-0.025em',
-              lineHeight: 1.4,
-              padding: '0 20px',
-              whiteSpace: 'pre-wrap',
-              display: 'flex',
-              gap: '325px',
-            }}
-          >
-            <span>{`${trumpPercent}`}</span>
-            <span>{`${harrisPercent}`}</span>
-          </div>
-        )}
-      </div>
-    ),
-    intents: showThirdPage
-      ? [
-          <Button.Link href={composeCastUrl}>Share</Button.Link> // دکمه "Share" با متن انگلیسی
-        ]
-      : hasSelected
-      ? [
-          <Button value="harris">Harris</Button>,
-          <Button value="trump">Trump</Button>,
-        ]
-      : [
-          <Button value="select">Vote</Button>,
-        ],
-  });
+ return c.res({
+  image: imageUrl,  // ارسال URL تصویر مستقیماً به عنوان مقدار image
+  intents: showThirdPage
+    ? [
+        <Button.Link href={composeCastUrl}>Share</Button.Link>
+      ]
+    : hasSelected
+    ? [
+        <Button value="harris">Harris</Button>,
+        <Button value="trump">Trump</Button>,
+      ]
+    : [
+        <Button value="select">Vote</Button>,
+      ],
+});
+
 });
 
 const port = 3000;
