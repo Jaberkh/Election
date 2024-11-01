@@ -56,12 +56,12 @@ app.frame('/', (c) => {
   if (fid !== undefined) {
     if (!votedFids[fid]) votedFids[fid] = 0;
 
-    if (votedFids[fid] >= 2) {
+    if (votedFids[fid] >= 10) {
       // محدودیت رای برای هر کاربر دوبار است
       return c.res({
         image: (
           <div style={{ color: 'white', textAlign: 'center', fontSize: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', background: 'black' }}>
-            Each user can vote only twice!
+            Each user can vote only Once!
           </div>
         ),
       });
