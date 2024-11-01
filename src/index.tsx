@@ -79,7 +79,7 @@ app.frame('/', (c) => {
   const frameUrl = 'https://election-u-s.onrender.com/';
   const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
     selectedCandidate
-  )}%2C%20Who%20Is%20Your%20Choice?%3F%0A%0AFrame%20By%20@Jeyloo%0A&embeds[]=https://election-u-s.onrender.com`;
+  )}%2C%20Who%20Is%20Your%20Choice?%3F%0A%0AFrame%20By%20@Jeyloo&embeds[]=https://election-u-s.onrender.com`;
   
   return c.res({
     image: (
