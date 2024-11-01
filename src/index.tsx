@@ -12,92 +12,169 @@ export const app = new Frog({
   verify: 'silent',
 });
 
-type Votes = { harris: number; trump: number };
-const votesFilePath = './votes.json';
-const votedFidsFilePath = './votedFids.json';
+// تعریف نوع Votes
+type Votes = {
+  harris: number;
+  trump: number;
+};
 
+// مسیر فایل JSON برای ذخیره رای‌ها
+const votesFilePath = './votes.json';
+
+// تابع برای خواندن رای‌ها از فایل JSON
 function loadVotes(): Votes {
   try {
     const data = fs.readFileSync(votesFilePath, 'utf-8');
     return JSON.parse(data) as Votes;
-  } catch {
+  } catch (error) {
+    console.error("Error reading votes file:", error);
     return { harris: 0, trump: 0 };
   }
 }
 
+// تابع برای ذخیره رای‌ها در فایل JSON
 function saveVotes(votes: Votes) {
-  fs.writeFileSync(votesFilePath, JSON.stringify(votes, null, 2));
+  try {
+    fs.writeFileSync(votesFilePath, JSON.stringify(votes, null, 2));
+  } catch (error) {
+    console.error("Error saving votes file:", error);
+  }
 }
 
-function loadVotedFids(): Set<number> {
-  if (!fs.existsSync(votedFidsFilePath)) fs.writeFileSync(votedFidsFilePath, JSON.stringify([]));
-  const data = fs.readFileSync(votedFidsFilePath, 'utf-8');
-  return new Set(JSON.parse(data));
-}
-
-function saveVotedFids(votedFids: Set<number>) {
-  fs.writeFileSync(votedFidsFilePath, JSON.stringify([...votedFids]));
-}
-
+// بارگذاری رای‌ها از فایل
 let votes: Votes = loadVotes();
-let votedFids: Set<number> = loadVotedFids();
 
 app.use('/*', serveStatic({ root: './public' }));
 
+// افزودن متا تگ‌ها در صفحه اصلی (روت)
+app.get('/', (c) => {
+  return c.html(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Voting Frame by Jeyloo</title>
+
+      <!-- Open Graph Meta Tags -->
+      <meta property="og:title" content="Voting Frame by Jeyloo" />
+      <meta property="og:description" content="I voted, what's your opinion? Vote and share your thoughts!" />
+      <meta property="og:image" content="https://i.imgur.com/HZG1uOl.png" />
+      <meta property="og:url" content="https://election-u-s.onrender.com" />
+      <meta property="og:type" content="website" />
+
+      <!-- Optional Twitter Card Meta Tags -->
+      <meta name="twitter:card" content="summary_large_image">
+      <meta name="twitter:title" content="Voting Frame by Jeyloo">
+      <meta name="twitter:description" content="I voted, what's your opinion? Vote and share your thoughts!">
+      <meta name="twitter:image" content="https://i.imgur.com/HZG1uOl.png">
+
+    </head>
+    <body>
+      <div id="app"></div>
+      <script type="module" src="main.js"></script>
+    </body>
+    </html>
+  `);
+});
+
+// مسیر اصلی فریم
 app.frame('/', (c) => {
   const { frameData, buttonValue } = c;
+
   const hasSelected = buttonValue === 'select';
   const showThirdPage = buttonValue === 'harris' || buttonValue === 'trump';
-  const imageUrl = showThirdPage ? 'https://i.imgur.com/HZG1uOl.png' : hasSelected ? 'https://i.imgur.com/be4kQO3.png' : 'https://i.imgur.com/bLVqRNb.png';
+
+  const imageUrl = showThirdPage 
+    ? 'https://i.imgur.com/HZG1uOl.png'
+    : hasSelected 
+    ? 'https://i.imgur.com/be4kQO3.png'
+    : 'https://i.imgur.com/bLVqRNb.png';
 
   let selectedCandidate = '';
-  const fid = frameData?.fid;
-  if (fid !== undefined && votedFids.has(fid)) {
-    return c.res({
-      image: <div style={{ color: 'white', textAlign: 'center', fontSize: '24px' }}>Each user can vote only once!</div>,
-    });
-  }
 
   if (buttonValue === 'harris') {
     votes.harris += 1;
     selectedCandidate = 'Harris';
-    if (fid !== undefined) votedFids.add(fid);
     saveVotes(votes);
-    saveVotedFids(votedFids);
   } else if (buttonValue === 'trump') {
     votes.trump += 1;
     selectedCandidate = 'Trump';
-    if (fid !== undefined) votedFids.add(fid);
     saveVotes(votes);
-    saveVotedFids(votedFids);
   }
 
   const totalVotes = votes.harris + votes.trump;
   const harrisPercent = totalVotes ? Math.round((votes.harris / totalVotes) * 100) : 0;
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
 
-  const frameUrl = 'https://election-u-s.onrender.com/';
   const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
     selectedCandidate
-  )}%2C%20what’s%20your%20opinion%3F%0A%0AFrame%20By%20@Jeyloo%0A${encodeURIComponent(frameUrl)}`;
-  
+  )},%20what’s%20your%20opinion?%0A%0AFrame%20By%20@Jeyloo%0A https://election-u-s.onrender.com`;
+
   return c.res({
     image: (
-      <div style={{ position: 'relative', width: '100%', height: '100%', background: 'black', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-        <img src={imageUrl} alt={showThirdPage ? "Thank you for voting!" : ""} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+          background: 'black',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+        }}
+      >
+        <img
+          src={imageUrl}
+          alt={showThirdPage ? "Thank you for voting!" : ""}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+          }}
+        />
         {showThirdPage && (
-          <div style={{ position: 'absolute', bottom: '2%', color: 'white', fontSize: '110px', letterSpacing: '-0.025em', lineHeight: 1.4, padding: '0 20px', whiteSpace: 'pre-wrap', display: 'flex', gap: '325px' }}>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '2%',
+              color: 'white',
+              fontSize: '110px',
+              fontStyle: 'normal',
+              letterSpacing: '-0.025em',
+              lineHeight: 1.4,
+              padding: '0 20px',
+              whiteSpace: 'pre-wrap',
+              display: 'flex',
+              gap: '325px',
+            }}
+          >
             <span>{`${trumpPercent}`}</span>
             <span>{`${harrisPercent}`}</span>
           </div>
         )}
       </div>
     ),
-    intents: showThirdPage ? [<Button.Link href={composeCastUrl}>Share</Button.Link>] : hasSelected ? [<Button value="harris">Harris</Button>, <Button value="trump">Trump</Button>] : [<Button value="select">Vote</Button>],
+    intents: showThirdPage
+      ? [
+          <Button.Link href={composeCastUrl}>Share</Button.Link> // دکمه "Share" با متن انگلیسی
+        ]
+      : hasSelected
+      ? [
+          <Button value="harris">Harris</Button>,
+          <Button value="trump">Trump</Button>,
+        ]
+      : [
+          <Button value="select">Vote</Button>,
+        ],
   });
 });
 
 const port = 3000;
 console.log(`Server is running on port ${port}`);
+
+// اضافه کردن devtools برای دیباگینگ
 devtools(app, { serveStatic });
+
 serve({ fetch: app.fetch, port });
