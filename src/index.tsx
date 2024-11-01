@@ -29,18 +29,18 @@ function saveVotes(votes: Votes) {
   fs.writeFileSync(votesFilePath, JSON.stringify(votes, null, 2));
 }
 
-function loadVotedFids(): Set<number> {
-  if (!fs.existsSync(votedFidsFilePath)) fs.writeFileSync(votedFidsFilePath, JSON.stringify([]));
+function loadVotedFids(): Record<number, number> {
+  if (!fs.existsSync(votedFidsFilePath)) fs.writeFileSync(votedFidsFilePath, JSON.stringify({}));
   const data = fs.readFileSync(votedFidsFilePath, 'utf-8');
-  return new Set(JSON.parse(data));
+  return JSON.parse(data);
 }
 
-function saveVotedFids(votedFids: Set<number>) {
-  fs.writeFileSync(votedFidsFilePath, JSON.stringify([...votedFids]));
+function saveVotedFids(votedFids: Record<number, number>) {
+  fs.writeFileSync(votedFidsFilePath, JSON.stringify(votedFids, null, 2));
 }
 
 let votes: Votes = loadVotes();
-let votedFids: Set<number> = loadVotedFids();
+let votedFids: Record<number, number> = loadVotedFids();
 
 app.use('/*', serveStatic({ root: './public' }));
 
@@ -52,22 +52,32 @@ app.frame('/', (c) => {
 
   let selectedCandidate = '';
   const fid = frameData?.fid;
-  if (fid !== undefined && votedFids.has(fid)) {
-    return c.res({
-      image: <div style={{ color: 'white', textAlign: 'center', fontSize: '24px' }}>Each user can vote only once!</div>,
-    });
+
+  if (fid !== undefined) {
+    if (!votedFids[fid]) votedFids[fid] = 0;
+
+    if (votedFids[fid] >= 2) {
+      // محدودیت رای برای هر کاربر دوبار است
+      return c.res({
+        image: (
+          <div style={{ color: 'white', textAlign: 'center', fontSize: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', background: 'black' }}>
+            Each user can vote only twice!
+          </div>
+        ),
+      });
+    }
   }
 
   if (buttonValue === 'harris') {
     votes.harris += 1;
     selectedCandidate = 'Harris';
-    if (fid !== undefined) votedFids.add(fid);
+    if (fid !== undefined) votedFids[fid] += 1;
     saveVotes(votes);
     saveVotedFids(votedFids);
   } else if (buttonValue === 'trump') {
     votes.trump += 1;
     selectedCandidate = 'Trump';
-    if (fid !== undefined) votedFids.add(fid);
+    if (fid !== undefined) votedFids[fid] += 1;
     saveVotes(votes);
     saveVotedFids(votedFids);
   }
@@ -76,11 +86,10 @@ app.frame('/', (c) => {
   const harrisPercent = totalVotes ? Math.round((votes.harris / totalVotes) * 100) : 0;
   const trumpPercent = totalVotes ? Math.round((votes.trump / totalVotes) * 100) : 0;
 
-  const frameUrl = 'https://election-u-s.onrender.com/';
   const composeCastUrl = `https://warpcast.com/~/compose?text=I%20voted%20for%20${encodeURIComponent(
     selectedCandidate
   )}%2C%20Who%20Is%20Your%20Choice?%3F%0A%0AFrame%20By%20@Jeyloo&embeds[]=https://election-u-s.onrender.com`;
-  
+
   return c.res({
     image: (
       <div style={{ position: 'relative', width: '100%', height: '100%', background: 'black', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
